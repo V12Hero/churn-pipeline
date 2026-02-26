@@ -11,11 +11,13 @@ import tqdm
 import logging
 from rich.logging import RichHandler
 
+from dotenv import load_dotenv
+load_dotenv(dotenv_path="/home/ammar/petromin/notebooks/.env")
 
-SERVER = '20.203.36.211'
-DATABASE = 'MACDB'
-USERNAME = 'to.mckinsey'
-PASSWORD = 'Petromin@1'
+SERVER = os.getenv("SERVER")
+DATABASE = os.getenv("DATABASE")
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
 
 logging.basicConfig(
     format= "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
