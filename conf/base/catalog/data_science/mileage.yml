@@ -1,0 +1,37 @@
+_spark_parquet_dataset: &_spark_parquet_dataset
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_pandas_parquet_dataset: &_pandas_parquet_dataset
+  type: pandas.ParquetDataset
+
+# Model Input
+
+mileage.forecast_base@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/06_models/mileage/forecast_base.parquet
+  save_args:
+    # engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+mileage.mileage_forecast:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/06_models/mileage/mileage_forecast.parquet
+  save_args:
+    # engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+# Raw - Spark
+mileage.forecast_base@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/06_models/mileage/forecast_base.parquet
+  save_args:
+    mode: overwrite
+#   layer: 01_raw

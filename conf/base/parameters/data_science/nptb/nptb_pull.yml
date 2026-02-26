@@ -1,0 +1,24 @@
+# This is a boilerplate parameters config generated for pipeline 'nptb_pull'
+# using Kedro 0.18.12.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.18.12/kedro_project_setup/configuration.html#parameters
+
+
+initial_date_nptb_pull: '2023-01-01'
+min_number_of_trx_for_recommendations_pull: 3 # Number of accumulated transactions needed to get a recommendation. Only clientes with at least N transactions in the past are considered.
+n_months_nptb_pull: 12 # Number of historic months to consider for transactions
+n_recommendations_pull: 10 # Number of recommendations (keep only the N first SKUs in the ranking)
+
+products_to_drop:
+  - SERVICE CHARGES 10 SAR | SERVICE | SERVICE
+  - EXTRA | SERVICE | SERVICE
+  - FILTER INSTALLATION | SERVICE | SERVICE
+
+  # - LUBRICATE LOCKS, HINGES AND LATCHES | SERVICE | SERVICE
+  # - MULTIPOINT INSPECTION | SERVICE | SERVICE
+  # - CHECK AND TIGHTEN ALL NUTS AND BOLTS | SERVICE | SERVICE
+
+  # - OIL FILTER - CUSTOMER OWN | SERVICE | SERVICE
+
+categories_to_drop: []

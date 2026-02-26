@@ -1,0 +1,27 @@
+# This is a boilerplate parameters config generated for pipeline 'nptb_push'
+# using Kedro 0.18.12.
+#
+# Documentation for this file format can be found in "Parameters"
+# Link: https://docs.kedro.org/en/0.18.12/kedro_project_setup/configuration.html#parameters
+n_months_nptb_push: 18
+last_date_push: 2024-12-01
+minimum_orders_to_be_considered_push: 2
+
+nptb_push_als_params:
+  factors: 3
+  regularization: 0.08
+  alpha: 0.17
+  random_state: 123
+
+nptb_push_recommendations_per_user: 10
+
+products_to_drop_push:
+  - SERVICE CHARGES 10 SAR | SERVICE | SERVICE
+  - FILTER INSTALLATION | SERVICE | SERVICE
+
+  # - MIGHTY OIL FILTER SERVICE | OIL FILTERS | OIL FILTER
+  # - OEM OIL FILTER SERVICE | OIL FILTERS | OIL FILTER 
+  # - LUBRICATE LOCKS, HINGES AND LATCHES | SERVICE | SERVICE
+  # - MULTIPOINT INSPECTION | SERVICE | SERVICE
+  # - CHECK AND TIGHTEN ALL NUTS AND BOLTS | SERVICE | SERVICE
+

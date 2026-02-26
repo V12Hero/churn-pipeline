@@ -1,0 +1,21 @@
+petromin.reporting:
+  footprint:
+    cluster_col: city
+    # geographic report params
+    geographic_report:
+      lat: latitude
+      lon: longitude
+      color: footprint_model_prediction
+      size_max: 15
+      zoom: 6
+
+    # footprint model report
+    geographic_html_report:
+      n_jobs: 6
+      environment: ${env}
+      template_path: notebooks/reporting/geospatial_footprint_report.ipynb
+      namespace: "petromin"
+      report_name: geographic_footprint_report
+      kernel: python3
+      timeout: 90000
+      remove_code: True

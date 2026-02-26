@@ -1,0 +1,34 @@
+
+
+
+saudi_arabia.geospatial:
+    type: pickle.PickleDataset
+    filepath: data/04_feature/saudi_arabia/geospatial/spatial_mastertable.pkl
+    # layer: feature
+
+saudi_arabia.censo:
+    type: geopandas.GenericDataset
+    filepath: data/04_feature/saudi_arabia/censo/censo.geojson
+    # layer: feature
+
+saudi_arabia.transactions:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/saudi_arabia/transactions/customer_transactions.csv
+    # layer: feature
+
+saudi_arabia.worldpop:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/saudi_arabia/worldpop/worldpop_output.parquet
+  # layer: feature
+
+saudi_arabia.mastertable:
+    type: pandas.ParquetDataset
+    filepath: data/05_model_input/saudi_arabia/mastertable.parquet
+    # layer: model_input
+
+saudi_arabia.feature_store:
+  type: pandas.ExcelDataset
+  filepath: data/05_model_input/saudi_arabia/feature_store.xlsx
+  save_args:
+    sheet_name: feature_store
+  # layer: integrative

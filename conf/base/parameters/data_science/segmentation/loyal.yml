@@ -1,0 +1,72 @@
+loyal.filter_segmentation_model_conditions:
+  - _observ_end_dt >= "2021-01-01"
+  - _observ_end_dt < "2025-01-01"
+  - is_active > 0
+  - is_loyal > 0
+  # - below_estimated_mineral_oil_change > 0
+  # - is_active_sum_past_23_next_0_months > 3
+
+loyal.filter_segmentation_prediction_conditions:
+  - _observ_end_dt >= "2021-01-01"
+  - _observ_end_dt < "2026-01-01"
+  - is_loyal > 0
+  - below_estimated_mineral_oil_change > 0
+
+# Model artifact parameters
+loyal.model_artifact:
+  # Feature store applied filters
+  features:
+    transactional:
+
+    # Selected features
+      - most_trx_branch_n_places_within_0300m__All
+      - most_trx_branch_pop_density
+      # - avg_n_places_within_0300m__All
+      # - avg_pop_density
+
+      # - most_frequent_day_of_month
+      - most_frequent_day_of_month_mode_past_11_next_0_months
+      # - most_frequent_day_of_week
+      - most_frequent_day_of_week_mode_past_11_next_0_months
+
+      - last_trx_net_sales
+      # - last_trx_total_amount_discounts
+      - last_trx_total_discount_percentual
+
+      - last_trx_current_mileage
+      - month_avg_mileage_per_day_nullif_past_11_next_0_months
+      # - is_single_visit
+
+      - customer_synthetic_oil
+      - month_avg_order_mean_past_11_next_0_months
+      - month_avg_order_max_past_11_next_0_months
+      - month_avg_percent_discount_mean_past_11_next_0_months
+      - month_avg_percent_discount_max_past_11_next_0_months
+      - is_active_sum_past_23_next_0_months
+      - month_distinct_skus_sold_mean_past_11_next_0_months
+      - month_distinct_product_categories_mean_past_11_next_0_months
+
+  # clustering model
+  cluster:
+    # clustering model parameters
+    scale_last_step: True # if true then it will scale dimensionality reduction outputs
+    # cluster scaler
+    scaler:
+      class: petromin.modelling.transformers.scaler.ColumnsPreserverScaler
+      kwargs:
+        scaler_params:
+          # class: sklearn.preprocessing.MinMaxScaler
+          class: sklearn.preprocessing.StandardScaler
+          kwargs:
+
+    # clustering algorithm
+    model:
+      class: petromin.modelling.models.segmentation.ElbowClusterSelector
+      kwargs:
+        min_clusters: 4
+        max_clusters: 12
+      # class: sklearn.cluster.KMeans
+      # kwargs:
+      #   n_clusters: 6
+      #   init: k-means++
+      #   random_state: ${GLOBAL_SEED}

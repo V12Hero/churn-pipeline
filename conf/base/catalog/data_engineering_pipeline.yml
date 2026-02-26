@@ -1,0 +1,20 @@
+# tag_dictionary:
+#     type: pandas.ExcelDataSet
+#     filepath: data/09_tag_dictionary/tag_dictionary.xlsx
+#     load_args:
+#         engine: openpyxl
+#         sheet_name: tag_dictionary
+# td:
+#   type: pickle.PickleDataSet
+#   filepath: data/09_tag_dictionary/td.pkl
+
+# td_updated:
+#   type: pickle.PickleDataSet
+#   filepath: data/09_tag_dictionary/td_updated.pkl
+
+
+saudi_arabia.primary:
+    type: geopandas.GenericDataset
+    filepath: data/03_primary/saudi_arabia/users.geojson
+    # layer: primary
+

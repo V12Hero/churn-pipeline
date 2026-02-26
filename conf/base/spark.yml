@@ -1,0 +1,18 @@
+# You can define spark specific configuration here.
+
+spark.driver.maxResultSize: 40g
+spark.hadoop.fs.s3a.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+spark.sql.execution.arrow.pyspark.enabled: true
+
+# https://docs.kedro.org/en/stable/integrations/pyspark_integration.html#tips-for-maximising-concurrency-using-threadrunner
+spark.scheduler.mode: FAIR
+spark.driver.extraJavaOptions: -Djava.security.manager=allow
+spark.executor.extraJavaOptions: -Djava.security.manager=allow
+
+
+spark.sql.legacy.parquet.nanosAsLong: true
+spark.sql.legacy.timeParserPolicy: LEGACY
+spark.driver.memory: 60g
+spark.sql.shuffle.partitions: 600
+
+spark.local.dir: "/home/ammar/petromin/.tmp"

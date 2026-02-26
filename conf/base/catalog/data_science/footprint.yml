@@ -1,0 +1,79 @@
+# Here you can define all your data sets by using simple YAML syntax.
+#
+# Documentation for this file format can be found in "The Data Catalog"
+# Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+
+_spark_parquet_dataset: &_spark_parquet_dataset
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+# Footprint MDT
+petromin.footprint_master_filtered@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/05_model_input/footprint/petromin_footprint_master_filtered
+  # layer: 05_model_input
+
+# footprint model
+# petromin.footprint_best_trial_params:
+#   type: kedro_mlflow.io.models.MlflowModelSaverDataSet
+#   flavor: mlflow.sklearn
+#   filepath: data/06_models/footprint/petromin_footprint_model_best_params
+  # layer: 06_models
+
+# petromin.footprint_model_study:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+#   data_set:
+#       type: pickle.PickleDataSet
+#       filepath: data/06_models/footprint/petromin_footprint_best_trial_params.pkl
+#   # layer: 06_models
+
+# petromin.footprint_model_artifact:
+#     type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+#     data_set:
+#         type: kedro_mlflow.io.models.MlflowModelSaverDataSet
+#         flavor: mlflow.sklearn
+#         filepath: data/06_models/segmentation/petromin_/footprint_model_artifact
+#     # layer: 06_models
+#     artifact_path: petromin_/footprint_model_artifact
+
+# petromin.footprint_model_train_metrics:
+#   type: kedro_mlflow.io.metrics.MlflowMetricsDataSet
+  # layer: 07_model_output
+
+# petromin.footprint_model_test_metrics:
+#   type: kedro_mlflow.io.metrics.MlflowMetricsDataSet
+  # layer: 07_model_output
+
+# petromin.footprint_model_train_output:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+#   data_set:
+#       type: pickle.PickleDataSet
+#       filepath: data/07_model_output/footprint/petromin_footprint_model_output.pkl
+  # layer: 07_model_output
+
+# petromin.footprint_feature_importance:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+#   data_set:
+#       type: pandas.CSVDataSet
+#       filepath: data/07_model_output/footprint/petromin_footprint_feature_importance.csv
+  # layer: 07_model_output
+
+# petromin.footprint_model_test_inference:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+#   data_set:
+#       type: pickle.PickleDataSet
+#       filepath: data/07_model_output/footprint/petromin_footprint_model_test_inference.pkl
+  # layer: 07_model_output
+
+# petromin.geographic_footprint_report:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataSet
+#   data_set:
+#     type: text.TextDataSet
+#     filepath: data/08_reporting/footprint/petromin_html_reports/geographic.html
+#     fs_args:
+#       open_args_save:
+#         encoding: "utf-8"
+#   artifact_path: geographic_report
+  # layer: 08_reporting

@@ -1,0 +1,132 @@
+_spark_parquet_dataset: &_spark_parquet_dataset
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_pandas_parquet_dataset: &_pandas_parquet_dataset
+  type: pandas.ParquetDataset
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+
+# Model Input
+
+churn.mdl_master_filtered@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/05_model_input/churn/model/mdl_master_filtered
+
+churn.mdl_master_without_unused_cols@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/05_model_input/churn/model/mdl_master_without_unused_cols
+
+churn.mdl_master_without_unused_cols@pandas:
+  <<: *_pandas_parquet_dataset
+  filepath: data/05_model_input/churn/model/mdl_master_without_unused_cols
+
+churn.mdl_master_without_unused_cols@polars:
+  type: polars.LazyPolarsDataset
+  file_format: parquet
+  save_args:
+    # mode: overwrite
+  load_args:
+    # use_pyarrow: true
+  filepath: data/05_model_input/churn/model/mdl_master_without_unused_cols/*.parquet
+
+churn.scaler:
+  type: pickle.PickleDataset
+  filepath: data/05_model_input/churn/model/scaler.pkl
+
+churn.mdl_master_scaled:
+  <<: *_pandas_parquet_dataset
+  filepath: data/05_model_input/churn/model/mdl_master_scaled
+
+churn.mdl_cv_indexes:
+  type: pickle.PickleDataset
+  filepath: data/06_models/churn/model/mdl_cv_indexes.pkl
+
+churn.mdl_selected_features:
+  type: pickle.PickleDataset
+  filepath: data/06_models/churn/model/selected_features.pkl
+
+churn.mdl_tuning_results:
+  <<: *_pandas_parquet_dataset
+  filepath: data/06_models/churn/model/mdl_tuning_results
+
+churn.mdl_tuning_params:
+  type: pickle.PickleDataset
+  filepath: data/06_models/churn/model/tuner_parameters.pkl
+
+churn.mdl_tuning_estimator:
+  type: pickle.PickleDataset
+  filepath: data/06_models/churn/model/tuned_estimator.pkl
+
+churn.mdl_churn_avg_metrics:
+  type: pickle.PickleDataset
+  filepath: data/06_models/churn/model/mdl_churn_avg_metrics.pkl
+
+churn.mdl_churn_metrics_df:
+  <<: *_pandas_parquet_dataset
+  filepath: data/06_models/churn/model/mdl_churn_metrics_df
+
+churn.mdl_estimator:
+  type: pickle.PickleDataset
+  filepath: data/06_models/churn/model/lgb_classifier.pkl
+
+churn.mdl_explainer:
+  type: pickle.PickleDataset
+  filepath: data/06_models/churn/model/mdl_explainer.pkl
+
+# Validation
+
+churn.mdl_validation_filtered@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/07_model_output/churn/predict/mdl_validation_filtered
+
+churn.mdl_validation_filtered@pandas:
+  <<: *_pandas_parquet_dataset
+  filepath: data/07_model_output/churn/predict/mdl_validation_filtered
+
+churn.mdl_churn_validation_avg_metrics:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/churn/predict/mdl_churn_validation_avg_metrics.pkl
+
+churn.mdl_churn_validation_metrics_df:
+  <<: *_pandas_parquet_dataset
+  filepath: data/07_model_output/churn/predict/mdl_churn_validation_metrics_df
+
+churn.mdl_churn_validation_beeswarm_plot:
+  type: matplotlib.MatplotlibWriter
+  filepath: data/08_reporting/mdl_churn_validation_beeswarm_plot.png
+  save_args:
+    format: png
+    bbox_inches: tight
+    dpi: 900
+
+churn.mdl_churn_validation_average_importance_plot:
+  type: matplotlib.MatplotlibWriter
+  filepath: data/08_reporting/mdl_churn_validation_average_importance_plot.png
+  save_args:
+    format: png
+    bbox_inches: tight
+    dpi: 900
+
+churn.mdl_churn_validation_feature_importance@pandas:
+  <<: *_pandas_parquet_dataset
+  filepath: data/07_model_output/churn/predict/mdl_churn_validation_feature_importance
+
+# Prediction
+
+churn.mdl_predict_filtered@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/07_model_output/churn/predict/mdl_predict_filtered
+
+churn.mdl_predict_filtered@pandas:
+  <<: *_pandas_parquet_dataset
+  filepath: data/07_model_output/churn/predict/mdl_predict_filtered
+
+churn.mdl_churn_predicted:
+  <<: *_pandas_parquet_dataset
+  filepath: data/07_model_output/churn/predict/mdl_churn_predicted

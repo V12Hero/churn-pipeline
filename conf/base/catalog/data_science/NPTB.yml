@@ -1,0 +1,67 @@
+_spark_csv_dataset: &_spark_csv_dataset
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: true
+    multiLine: True # This parameter helps when there is \n character in the fields.
+    inferSchema: False
+    escape: "\"" # This parameter helps when there are fields that have comma.
+  save_args:
+    header: true
+    mode: overwrite
+
+_spark_parquet_dataset: &_spark_parquet_dataset
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_pandas_parquet_dataset: &_pandas_parquet_dataset
+  type: pandas.ParquetDataset
+
+
+  # Next product to buy
+
+  # Pull
+
+nptb_transaction_data:
+  <<: *_spark_parquet_dataset
+  filepath: data/06_model/next_product_to_buy/pull/nptb_transaction_data
+
+nptb_pull_transaction:
+  <<: *_spark_parquet_dataset
+  filepath: data/06_model/next_product_to_buy/pull/nptb_pull_transaction
+
+nptb_pull_transaction_features:
+  <<: *_spark_parquet_dataset
+  filepath: data/06_model/next_product_to_buy/pull/nptb_pull_transaction_features
+
+# Push
+
+nptb_push_transactions_grouped@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/06_model/next_product_to_buy/push/nptb_push_transactions_grouped
+
+nptb_push_transactions_grouped@pandas:
+  <<: *_pandas_parquet_dataset
+  filepath: data/06_model/next_product_to_buy/push/nptb_push_transactions_grouped
+
+nptb_push_row_indices:
+  type: pickle.PickleDataset
+  filepath: data/06_model/next_product_to_buy/push/nptb_push_row_indices.pkl
+
+nptb_push_index_item:
+  type: pickle.PickleDataset
+  filepath: data/06_model/next_product_to_buy/push/nptb_index_item.pkl
+
+nptb_push_index_customer:
+  type: pickle.PickleDataset
+  filepath: data/06_model/next_product_to_buy/push/nptb_index_customer.pkl
+
+nptb_push_train_matrix:
+  type: pickle.PickleDataset
+  filepath: data/06_model/next_product_to_buy/push/nptb_train_matrix.pkl
+
+nptb_push_recommendations:
+  <<: *_pandas_parquet_dataset
+  filepath: data/06_model/next_product_to_buy/push/nptb_push_recommendations

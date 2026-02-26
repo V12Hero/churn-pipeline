@@ -1,0 +1,191 @@
+# tecno_store.filter_segmentation_model_conditions:
+#   - _observ_end_dt == "2023-10-31"
+#   - chain_name == "TECNO FACIL"
+
+# # Model artifact parameters
+# tecno_store.model_artifact:
+#   # Feature store applied filters
+#   features:
+#     transactional:
+#       - trx_total_sales_sum_past_11_next_0_months
+#       - trx_total_sales_sum_past_5_next_0_months
+#       # - trx_total_sales_sum_past_2_next_0_months
+#       - trx_total_sales_mean_past_11_next_0_months
+#       # - trx_total_sales_mean_past_5_next_0_months
+#       # - trx_total_sales_mean_past_2_next_0_months
+#       - trx_net_sales_sum_past_11_next_0_months
+#       # - trx_net_sales_sum_past_5_next_0_months
+#       - trx_net_sales_mean_past_11_next_0_months
+#       # - trx_net_sales_mean_past_5_next_0_months
+#       - trx_total_profit_sum_past_11_next_0_months
+#       # - trx_total_profit_sum_past_5_next_0_months
+#       - trx_total_profit_mean_past_11_next_0_months
+#       # - trx_total_profit_mean_past_5_next_0_months
+#       # - trx_total_cost_sum_past_5_next_0_months
+#       # - trx_total_cost_mean_past_5_next_0_months
+#       # - trx_total_cost_returns_sum_past_5_next_0_months
+#       # - trx_total_cost_returns_mean_past_5_next_0_months
+#       # - trx_avg_order_sum_past_11_next_0_months
+#       # - trx_avg_order_sum_past_5_next_0_months
+#       - trx_avg_order_mean_past_11_next_0_months
+#       # - trx_avg_order_mean_past_5_next_0_months
+#       - trx_avg_skus_per_order_sum_past_11_next_0_months
+#       # - trx_avg_skus_per_order_sum_past_5_next_0_months
+#       - trx_distinct_skus_sold_sum_past_11_next_0_months
+#       # - trx_distinct_skus_sold_sum_past_5_next_0_months
+#       - trx_net_sales_category_acc_celulares_sum_past_11_next_0_months
+#       # - trx_net_sales_category_acc_celulares_sum_past_5_next_0_months
+#       - trx_net_sales_category_aires_acondicionados_sum_past_11_next_0_months
+#       # - trx_net_sales_category_aires_acondicionados_sum_past_5_next_0_months
+#       - trx_net_sales_category_ambientadores_sum_past_11_next_0_months
+#       # - trx_net_sales_category_ambientadores_sum_past_5_next_0_months
+#       - trx_net_sales_category_audifonos_sum_past_11_next_0_months
+#       # - trx_net_sales_category_audifonos_sum_past_5_next_0_months
+#       - trx_net_sales_category_audio_sum_past_11_next_0_months
+#       # - trx_net_sales_category_audio_sum_past_5_next_0_months
+#       - trx_net_sales_category_bocinas_personales_sum_past_11_next_0_months
+#       # - trx_net_sales_category_bocinas_personales_sum_past_5_next_0_months
+#       - trx_net_sales_category_camaras_sum_past_11_next_0_months
+#       # - trx_net_sales_category_camaras_sum_past_5_next_0_months
+#       - trx_net_sales_category_camas_y_colchones_sum_past_11_next_0_months
+#       # - trx_net_sales_category_camas_y_colchones_sum_past_5_next_0_months
+#       - trx_net_sales_category_medios_de_transporte_vehiculos_sum_past_11_next_0_months
+#       # - trx_net_sales_category_medios_de_transporte_vehiculos_sum_past_5_next_0_months
+#       - trx_net_sales_category_celulares_sum_past_11_next_0_months
+#       # - trx_net_sales_category_celulares_sum_past_5_next_0_months
+#       - trx_net_sales_category_comunicaciones_sum_past_11_next_0_months
+#       # - trx_net_sales_category_comunicaciones_sum_past_5_next_0_months
+#       - trx_net_sales_category_cuidado_personal_sum_past_11_next_0_months
+#       # - trx_net_sales_category_cuidado_personal_sum_past_5_next_0_months
+#       - trx_net_sales_category_electrodomesticos_sum_past_11_next_0_months
+#       # - trx_net_sales_category_electrodomesticos_sum_past_5_next_0_months
+#       # - trx_net_sales_category_exteriores_sum_past_11_next_0_months
+#       # - trx_net_sales_category_exteriores_sum_past_5_next_0_months
+#       - trx_net_sales_category_garantia_extendida_sum_past_11_next_0_months
+#       # - trx_net_sales_category_garantia_extendida_sum_past_5_next_0_months
+#       - trx_net_sales_category_hogar_inteligente_sum_past_11_next_0_months
+#       # - trx_net_sales_category_hogar_inteligente_sum_past_5_next_0_months
+#       - trx_net_sales_category_impresoras_sum_past_11_next_0_months
+#       # - trx_net_sales_category_impresoras_sum_past_5_next_0_months
+#       # - trx_net_sales_category_instrumentos_musicales_sum_past_11_next_0_months
+#       # - trx_net_sales_category_instrumentos_musicales_sum_past_5_next_0_months
+#       - trx_net_sales_category_it_sum_past_11_next_0_months
+#       # - trx_net_sales_category_it_sum_past_5_next_0_months
+#       - trx_net_sales_category_linea_blanca_sum_past_11_next_0_months
+#       # - trx_net_sales_category_linea_blanca_sum_past_5_next_0_months
+#       - trx_net_sales_category_medios_de_transporte_sum_past_11_next_0_months
+#       # - trx_net_sales_category_medios_de_transporte_sum_past_5_next_0_months
+#       - trx_net_sales_category_pc_gaming_sum_past_11_next_0_months
+#       # - trx_net_sales_category_pc_gaming_sum_past_5_next_0_months
+#       - trx_net_sales_category_prendas_electron_sum_past_11_next_0_months
+#       # - trx_net_sales_category_prendas_electron_sum_past_5_next_0_months
+#       - trx_net_sales_category_productos_impulso_sum_past_11_next_0_months
+#       # - trx_net_sales_category_productos_impulso_sum_past_5_next_0_months
+#       # - trx_net_sales_category_protect_energia_sum_past_5_next_0_months
+#       # - trx_net_sales_category_serv_operadores_sum_past_5_next_0_months
+#       - trx_net_sales_category_tablets_sum_past_11_next_0_months
+#       # - trx_net_sales_category_tablets_sum_past_5_next_0_months
+#       - trx_net_sales_category_tv_sum_past_11_next_0_months
+#       # - trx_net_sales_category_tv_sum_past_5_next_0_months
+#       - trx_net_sales_category_video_sum_past_11_next_0_months
+#       # - trx_net_sales_category_video_sum_past_5_next_0_months
+#       # - trx_net_sales_category_videocamaras_sum_past_11_next_0_months
+#       # - trx_net_sales_category_videocamaras_sum_past_5_next_0_months
+#       # - trx_net_sales_category_videojuegos_sum_past_11_next_0_months
+#       # - trx_net_sales_category_videojuegos_sum_past_5_next_0_months
+
+#     demographic:
+#       - store_size_m2
+#       - pop_density
+#       # - min_distance_financial_centre
+#       - min_distance_marketplaces
+#       - min_distance_restaurants
+#       # - mean_distance_financial_centre
+#       # - mean_distance_marketplaces
+#       # - mean_distance_restaurants
+#       - min_distance_all_competitors
+#       - number_of_transportation_in_a_ratio_of_500_meters
+#       - number_of_community_in_a_ratio_of_500_meters
+#       - min_distance_transportation
+
+#     geospatial:
+#       - latitude
+#       - longitude
+#       - number_of_financial_centre_in_a_ratio_of_750_meters
+#       - number_of_marketplaces_in_a_ratio_of_750_meters
+#       - number_of_restaurants_in_a_ratio_of_750_meters
+
+#     competitors:
+#       - amount_all_competitors_around_500_meters
+#       - min_distance_all_competitors
+#       - amount_competitors_tecno_store_around_500_meters
+#       - min_distance_competitors_tecno_store
+
+
+#   # scaler
+#   # scaler:
+#   #   transactional:
+#   #     class: sklearn.preprocessing.StandardScaler
+#   #     kwargs:
+#   #       with_mean: True
+#   #       with_std: True
+#   #   demographic:
+#   #     class: sklearn.preprocessing.MinMaxScaler
+#   #     kwargs:
+#   #   competitors:
+#   #     class: sklearn.preprocessing.MinMaxScaler
+#   #     kwargs:
+#   #   geospatial:
+#   #     class: sklearn.preprocessing.MinMaxScaler
+#   #     kwargs:
+
+#   # Dimensionality reduction models
+#   # embedders:
+#   #   # dimensionality reduction embedders
+#   #   demographic:
+#   #     class: sklearn.decomposition.PCA
+#   #     kwargs:
+#   #       n_components: 7
+#   #       random_state: ${GLOBAL_SEED}
+
+#   #   competitors:
+#   #     class: sklearn.decomposition.TruncatedSVD
+#   #     kwargs:
+#   #       n_components: 15
+#   #       random_state: ${GLOBAL_SEED}
+
+#   #   transactional:
+#   #     class: sklearn.decomposition.PCA
+#   #     kwargs:
+#   #       n_components: 18
+#   #       random_state: ${GLOBAL_SEED}
+
+#   #   geospatial:
+#   #     class: sklearn.decomposition.TruncatedSVD
+#   #     kwargs:
+#   #       n_components: 7
+#   #       random_state: ${GLOBAL_SEED}
+
+#   # clustering model
+#   cluster:
+#     # clustering model parameters
+#     scale_last_step: True # if true then it will scale dimensionality reduction outputs
+#     # cluster scaler
+#     scaler:
+#       class: distelsa.modelling.transformers.scaler.ColumnsPreserverScaler
+#       kwargs:
+#         scaler_params:
+#           class: sklearn.preprocessing.MinMaxScaler
+#           kwargs:
+
+#     # clustering algorithm
+#     model:
+#       class: distelsa.modelling.models.segmentation.ElbowClusterSelector
+#       kwargs:
+#         min_clusters: 1
+#         max_clusters: 6
+#       # class: sklearn.cluster.KMeans
+#       # kwargs:
+#       #   n_clusters: 3
+#       #   init: k-means++
+#       #   random_state: ${GLOBAL_SEED}

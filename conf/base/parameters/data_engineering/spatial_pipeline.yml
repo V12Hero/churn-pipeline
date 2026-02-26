@@ -1,0 +1,29 @@
+
+saudi_arabia.spatial_mastertable:
+  country: saudi_arabia
+  bbox: ${BBOX.saudi_arabia}
+  distance_col: "distance"
+  customer_id_col: ${CUSTOMER_ID_COL}
+  feature:
+    groupby_col: ${CUSTOMER_ID_COL}
+    osm_tags:
+      osm_subway:
+        max_diameter: 1000
+        thresholds: [50, 100, 300]
+        columns: ['station']
+      osm_poi:
+        max_diameter: 1000
+        thresholds: [50, 100, 300]
+        columns: ['amenity_map']
+      osm_highways:
+        max_diameter: 1000
+        thresholds: [50]
+        columns: ['highway_map']
+    combine_geospatial_features:
+      min_distance_transportation:
+        agg_cols:
+          - 'min_distance_transportation'
+          - 'min_distance_pedestrian_highway'
+          # - 'min_distance_subway'
+        agg_type: 'min'
+  business_features: NULL

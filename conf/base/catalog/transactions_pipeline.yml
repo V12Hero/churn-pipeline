@@ -1,0 +1,565 @@
+transactions.origin:
+    # type: pandas.CSVDataset
+    type: pandas.ParquetDataset
+    filepath: data/01_raw/transactions_origin.parquet
+    # layer: origin
+
+
+transactions.raw:
+    type: pickle.PickleDataset
+    filepath: data/01_raw/transactions.pkl
+    # layer: raw
+
+transactions.intermediate:
+    type: pandas.CSVDataset
+    filepath: data/02_intermediate/transactions.csv
+    # layer: intermediate
+
+transactions.primary_general:
+    #type: pandas.CSVDataset
+    type: pickle.PickleDataset
+    filepath: data/03_primary/transactions_general.pkl
+    # layer: primary
+
+transactions.primary:
+    #type: pandas.CSVDataset
+    type: pickle.PickleDataset
+    filepath: data/03_primary/transactions.pkl
+    # layer: primary
+
+# Transactions
+
+transactions.transactions_with_evaluation_date:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_with_evaluation_date.csv
+    # layer: feature
+
+# transactions_120d
+transactions_120d.feature.per_customer_product_group:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/per_customer_product_group.csv
+    # layer: feature
+
+transactions_120d.feature.per_customer:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/per_customer.csv
+    # layer: feature
+
+transactions_120d.feature.per_customer_product_micro_category:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/per_customer_product_micro_category.csv
+    # layer: feature
+
+transactions_120d.feature.micro_category_activity:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/micro_category_activity.csv
+    # layer: feature
+
+transactions_120d.feature.join_dfs_features:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/join_dfs_features.csv
+    # layer: feature
+
+transactions_120d.feature.transactions_percentage:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/transactions_percentage.csv
+    # layer: feature
+
+transactions_120d.feature:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/customer_transactions.csv
+    # layer: feature
+
+transactions_120d.feature.per_customer_per_sku_last_order:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/per_customer_per_sku_last_order.csv
+    # layer: feature
+
+transactions_120d.feature.per_customer_last_order:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_120d/feature/per_customer_last_order.csv
+    # layer: feature
+
+# transactions_90d
+transactions_90d.feature.per_customer_product_group:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/per_customer_product_group.csv
+    # layer: feature
+
+transactions_90d.feature.per_customer:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/per_customer.csv
+    # layer: feature
+
+transactions_90d.feature.per_customer_product_micro_category:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/per_customer_product_micro_category.csv
+    # layer: feature
+
+transactions_90d.feature.micro_category_activity:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/micro_category_activity.csv
+    # layer: feature
+
+transactions_90d.feature.join_dfs_features:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/join_dfs_features.csv
+    # layer: feature
+
+transactions_90d.feature.transactions_percentage:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/transactions_percentage.csv
+    # layer: feature
+
+transactions_90d.feature:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/customer_transactions.csv
+    # layer: feature
+
+transactions_90d.feature.per_customer_per_sku_last_order:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/per_customer_per_sku_last_order.csv
+    # layer: feature
+
+transactions_90d.feature.per_customer_last_order:
+    type: pandas.CSVDataset
+    filepath: data/04_feature/transactions_90d/feature/per_customer_last_order.csv
+    # layer: feature
+
+# diccionary
+tag_dictionary:
+    type: pandas.ExcelDataset
+    filepath: data/09_tag_dictionary/tag_dictionary.xlsx
+    load_args:
+        engine: openpyxl
+        sheet_name: tag_dictionary
+td:
+  type: pickle.PickleDataset
+  filepath: data/09_tag_dictionary/td.pkl
+
+td_updated:
+  type: pickle.PickleDataset
+  filepath: data/09_tag_dictionary/td_updated.pkl
+
+
+# New pipeline
+
+
+transactions.raw_world_pop:
+  type: spark.SparkDataset
+  file_format: csv
+  filepath: data/01_raw/saudi_arabia/sau_pd_2020_1km_UNadj_ASCII_XYZ.csv
+  load_args:
+    header: true
+    multiLine: True # This parameter helps when there is \n character in the fields.
+    inferSchema: False
+    escape: "\"" # This parameter helps when there are fields that have comma.
+  save_args:
+    header: true
+    mode: overwrite
+#   layer: 01_raw
+
+transactions.prm_world_pop@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/03_primary/prm_world_pop
+  save_args:
+    mode: overwrite
+
+transactions.prm_world_pop@pandas:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/prm_world_pop
+  save_args:
+    mode: overwrite
+
+
+transactions.int_transactions:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/02_intermediate/int_transactions
+  save_args:
+    mode: overwrite
+#   layer: 02_intermediate
+
+transactions.prm_transactions:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/03_primary/prm_transactions
+  save_args:
+    mode: overwrite
+#   layer: 03_primary
+
+transactions.ftr_sales:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_sales
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_mileage:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_mileage
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_geolocation:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_geolocation
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_vehicle:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_vehicle
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_segment:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_segment
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_windows_sales:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_windows_sales
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+
+transactions.ftr_churn:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_churn
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_master@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/05_model_input/ftr_master
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_master@pandas:
+  type: pandas.ParquetDataset
+  filepath: data/05_model_input/ftr_master
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+
+transactions.segmentation_model_output@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/07_model_output/segmentation/transactions/segmentation_model_output.parquet
+  save_args:
+    mode: overwrite
+
+
+transactions.segmentation_model_output@pandas:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/segmentation/transactions/segmentation_model_output.parquet
+  save_args:
+    engine: fastparquet
+    index: False
+  load_args:
+    engine: fastparquet
+
+
+
+# Raw - Pandas
+transactions.raw_invoices@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_invoices.parquet
+  load_args:
+    engine: fastparquet
+  # save_args:
+  #   mode: overwrite
+#   layer: 01_raw
+
+
+transactions.raw_invoices_items_PE@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_invoices_items_PE.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+transactions.raw_invoices_items_PAC@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_invoices_items_PAC.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+transactions.raw_invoices_items@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_invoices_items.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+transactions.raw_promos@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_promos.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+transactions.raw_customers@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_customers.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+transactions.raw_vehicles@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_vehicles.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+  # save_args:
+#   layer: 01_raw
+
+transactions.raw_branches@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/raw_branches.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+  # save_args:
+#   layer: 01_raw
+
+transactions.raw_servicing_rules@pandas:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/Servicing Rules.csv
+
+
+transactions.raw_transactions@pandas:
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/01_raw/transactions_origin.parquet
+  load_args:
+    engine: fastparquet
+  save_args:
+    engine: fastparquet
+    index: False
+#   layer: 01_raw
+
+# Raw - Spark
+transactions.raw_customers:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/01_raw/raw_customers.parquet
+  save_args:
+    mode: overwrite
+#   layer: 01_raw
+
+transactions.raw_vehicles:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/01_raw/raw_vehicles.parquet
+  save_args:
+    mode: overwrite
+#   layer: 01_raw
+
+transactions.raw_branches:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/01_raw/raw_branches.parquet
+  save_args:
+    mode: overwrite
+#   layer: 01_raw
+
+transactions.raw_promos:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/01_raw/raw_promos.parquet
+  save_args:
+    mode: overwrite
+#   layer: 01_raw
+
+transactions.raw_servicing_rules:
+  type: spark.SparkDataset
+  file_format: csv
+  filepath: data/01_raw/Servicing Rules.csv
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+#   layer: 01_raw
+
+transactions.raw_transactions:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/01_raw/transactions_origin.parquet
+  save_args:
+    mode: overwrite
+#   layer: 01_raw
+
+######### Intermediate
+transactions.int_customers@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/02_intermediate/int_customers
+  save_args:
+    mode: overwrite
+#   layer: 02_intermediate
+
+transactions.int_vehicles@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/02_intermediate/int_vehicles
+  save_args:
+    mode: overwrite
+#   layer: 02_intermediate
+
+transactions.int_branches@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/02_intermediate/int_branches
+  save_args:
+    mode: overwrite
+#   layer: 02_intermediate
+
+# Primary
+transactions.prm_customers:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/03_primary/prm_customers
+  save_args:
+    mode: overwrite
+#   layer: 03_primary
+
+transactions.prm_branches@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/03_primary/prm_branches
+  save_args:
+    mode: overwrite
+#   layer: 03_primary
+
+transactions.prm_branches@pandas:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/prm_branches
+  save_args:
+    mode: overwrite
+
+transactions.prm_vehicles:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/03_primary/prm_vehicles
+  save_args:
+    mode: overwrite
+#   layer: 03_primary
+
+transactions.prm_spine:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/03_primary/prm_spine
+  save_args:
+    mode: overwrite
+#   layer: 03_primary
+
+
+
+# Features
+transactions.ftr_customers:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_customers
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+
+transactions.ftr_special_trxs:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_special_trxs
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+transactions.ftr_branches:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/04_feature/ftr_branches
+  save_args:
+    mode: overwrite
+#   layer: 04_feature
+
+# Geospatial
+
+transactions.prm_geospatial_poi:
+  type: geopandas.GenericDataset
+  filepath: data/03_primary/saudi_arabia/osm/poi.geojson
+
+transactions.prm_geospatial_highways:
+  type: geopandas.GenericDataset
+  filepath: data/03_primary/saudi_arabia/osm/highways.geojson
+
+transactions.prm_geospatial_subways:
+  type: geopandas.GenericDataset
+  filepath: data/03_primary/saudi_arabia/osm/subway.geojson
+
+
+transactions.prm_geolocation@pandas:
+  # type: spark.SparkDataset
+  type: pandas.ParquetDataset
+  # file_format: parquet
+  filepath: data/03_primary/prm_geolocation
+  save_args:
+    # mode: overwrite
+    index: False
+    engine: fastparquet
+
+transactions.prm_geolocation@spark:
+  type: spark.SparkDataset
+  file_format: parquet
+  filepath: data/03_primary/prm_geolocation
+  save_args:
+    mode: overwrite
+    index: False

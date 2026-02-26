@@ -1,0 +1,809 @@
+
+transactions:
+  source: "transactions"
+  # Intermediate layer -- geometry
+  apply: FALSE
+  coordinates:
+    latitud: NULL
+    longitud: NULL
+  epsg: NULL
+  cols_to_standarize: []
+  # Primary layer params
+  pivot: NULL
+  groups: NULL
+  aggregation: NULL
+  pre_features:
+    order_delivered_at_date:
+      type: function_col
+      function: transform_to_timestamp
+      parameters:
+        column: order_delivered_at_date # transaction_date
+  post_features: NULL
+  global_params: &_global_params
+    #sample: 50000
+    cols:
+      customer_id: ${CUSTOMER_ID_COL}
+      days_since: 'days_since_transaction'
+      days_between: 'days_between_transactions'
+      transaction_date: 'order_delivered_at_date'
+      transaction_id: 'transaction_id'
+      quantity: 'quantity'
+      sales_amount: 'sales_amount'
+      has_discount: 'has_discount'
+      discount: 'sum_discounted_value'
+      product_id: 'sku'
+      product_category: 'sku_macro_category_clean'
+      gross_profit: 'gross_profit'
+    # Overrides config
+    # manual_evaluation_dates:
+    #   - null # !!timestamp 2023-02-28
+    # Optional: date to start generating time series features. If null is the last transaction date
+    evaluation_date_start: 2020-07-01 # !!timestamp 2022-11-01
+    # Optional: date to finish generating time series features, if null is the same as the start date
+    evaluation_date_end: 2025-01-01 # !!timestamp 2022-12-01
+    # Optional: time interval to generate time series features
+    freq: 'M'
+    # Window in days to define if user is active or not
+    active_user_window: 30
+
+transactions_90d:
+  # Feature layer
+  # Global parameters to specify column names and other information
+  global_params: *_global_params
+  # Different datasets/granularities that will be generated
+
+  dfs:
+    per_customer:
+      groupby_cols: ['customer_id']
+      # available feature groups: ["week", "order", "overall", "frequency"]
+      features:
+        granularities: ["week", "month", "order"]
+        overall: True
+        frequency: ["monthly", "weekly", "daily"]
+      # Time windows to generate the features
+      num_days: [90] # Always keep from largest to smallest
+
+    per_customer_product_group:
+      groupby_cols: ['customer_id', 'sku_macro_category_clean']
+      features:
+        granularities: ["order"]
+        overall: True
+        frequency: ["daily"]
+      # Time windows to generate the features
+      num_days: [90] # Always keep from largest to smallest
+
+    per_customer_product_micro_category:
+      groupby_cols: ['customer_id', 'sku_micro_category']
+      features:
+        frequency: ["daily"]
+        # filter regex to to include only interest features
+        regex: "number_of_transactions((?!_with_discount).)*last_90_days"
+      # Time windows to generate the features
+      num_days: [90] # Always keep from largest to smallest
+
+    micro_category_activity:
+      groupby_cols: ['customer_id', 'sku_micro_category']
+      features:
+        frequency: ["daily"]
+        # filter regex to to include only interest features
+        regex: "^active_user.*(?<!days)$"
+        prefix: "micro_category_"
+      # Time windows to generate the features
+      num_days: [30] # Always keep from largest to smallest
+
+  # Column that will be used to join the dfs
+  join_col: ['customer_id', 'evaluation_date']
+  # Groupby columns for each dataset in DFs
+  # Parameters of columns that will be used to calculate percentages of each category
+  calculate_percentages:
+    dist_micro_category:
+      #regex: "number_of_transactions((?!_with_discount).)*last_90_days"
+      percentage_cols:
+        - 'number_of_transactions_micro_category_1_last_90_days'
+      main_col: 'number_of_transactions_last_90_days'
+      replace_name: 'number_of_transactions' # look at pattern of columns
+      sum_100: True
+    frequency_micro_category:
+      #regex: "number_of_transactions((?!_with_discount).)*last_90_days"
+      percentage_cols:
+        - 'number_of_transactions_micro_category_1_last_90_days'
+      main_col: 'number_of_transactions_last_90_days'
+      replace_name: 'number_of_transactions' # look at pattern of columns
+      sum_100: False
+    distribution_of_counts_in_order:
+      percentage_cols:
+        - 'number_of_transactions_category_1_last_90_days'
+        - 'number_of_transactions_category_2_last_90_days'
+      main_col: 'number_of_transactions_last_90_days'
+      replace_name: 'number_of_transactions'
+      sum_100: True
+    frequency_in_order:
+      percentage_cols:
+        - 'number_of_transactions_category_1_last_90_days'
+        - 'number_of_transactions_category_2_last_90_days'
+      main_col: 'number_of_transactions_last_90_days'
+      replace_name: 'number_of_transactions'
+      sum_100: False
+  business_features:
+    - function: transactions.nodes._add_churn_column
+      parameters:
+        churn_col: number_of_transactions_last_90_days
+  per_customer_last_order:
+    groupby_cols: ['customer_id', 'evaluation_date']
+    num_days: [90]
+  per_customer_per_sku_last_order:
+    groupby_cols: ['customer_id', 'sku', 'evaluation_date']
+    num_days: [90]
+  select_cols:
+    cols_to_select: ["*"]
+    cols_to_drop: ["days_since_last_order", "num_orders_last_90_days"]
+
+
+transactions_120d:
+  # Feature layer
+  # Global parameters to specify column names and other information
+  global_params: *_global_params
+  # Different datasets/granularities that will be generated
+  dfs:
+    per_customer:
+      groupby_cols: ['customer_id']
+      features:
+        granularities: ["week", "month", "order"]
+        overall: True
+        frequency: ["monthly", "weekly", "daily"]
+      # Time windows to generate the features
+      num_days: [120] # Always keep from largest to smallest
+
+    per_customer_product_group:
+      groupby_cols: ['customer_id', 'sku_macro_category_clean']
+      features:
+        granularities: ["order"]
+        overall: True
+        frequency: ["daily"]
+      # Time windows to generate the features
+      num_days: [120] # Always keep from largest to smallest
+
+    per_customer_product_micro_category:
+      prefix: "micro_category"
+      # around 88 columns per window (88 * len(num_days))
+      groupby_cols: ['customer_id', 'sku_micro_category']
+      features:
+        granularities: []
+        frequency: ["daily"]
+        # filter regex to to include only interest features
+        regex: "number_of_transactions((?!_with_discount).)*last_(120|90)_days"
+      # Time windows to generate the features
+      num_days: [120, 90] # Always keep from largest to smallest
+
+    micro_category_activity:
+      groupby_cols: ['customer_id', 'sku_micro_category']
+      features:
+        frequency: ["daily"]
+        # filter regex to to include only interest features
+        regex: "^active_user.*(?<!days)$"
+        prefix: "micro_category_"
+      # Time windows to generate the features
+      num_days: [30] # Always keep from largest to smallest
+
+  # Column that will be used to join the dfs
+  join_col: ['customer_id', 'evaluation_date']
+  # Groupby columns for each dataset in DFs
+  # Parameters of columns that will be used to calculate percentages of each category
+  calculate_percentages:
+    distribution_of_counts_in_order:
+      percentage_cols:
+        - 'number_of_transactions_category_1_last_120_days'
+        - 'number_of_transactions_category_2_last_120_days'
+      main_col: 'number_of_transactions_last_120_days'
+      replace_name: 'number_of_transactions'
+      sum_100: True
+    frequency_in_order:
+      percentage_cols:
+        - 'number_of_transactions_category_1_last_120_days'
+        - 'number_of_transactions_category_2_last_120_days'
+      main_col: 'number_of_transactions_last_120_days'
+      replace_name: 'number_of_transactions'
+      sum_100: False
+    frequency_micro_category:
+      percentage_cols:
+        - 'number_of_transactions_micro_category_1_last_120_days'
+      main_col: 'number_of_transactions_last_120_days'
+      replace_name: 'number_of_transactions'
+      sum_100: False
+    dist_micro_category:
+      #regex: "number_of_transactions((?!_with_discount).)*last_90_days"
+      percentage_cols:
+        - 'number_of_transactions_micro_category_1_last_120_days'
+      main_col: 'number_of_transactions_last_90_days'
+      replace_name: 'number_of_transactions' # look at pattern of columns
+      sum_100: True
+  business_features:
+    - function: transactions.nodes._add_churn_column
+      parameters:
+        churn_col: number_of_transactions_last_120_days
+  per_customer_last_order:
+    groupby_cols: ['customer_id', 'evaluation_date']
+    num_days: [120]
+  per_customer_per_sku_last_order:
+    groupby_cols: ['customer_id', 'sku', 'evaluation_date']
+    num_days: [120]
+  select_cols:
+    cols_to_select: ["*"]
+    cols_to_drop: ["days_since_last_order", "num_orders_last_120_days"]
+
+
+# New pipeline
+# Parámetros para reformatear las tablas originales
+# schemas:
+
+# TODO: Add BranchID
+
+transactions.schemas:
+  # Transactions
+  transactions:
+    fields:
+
+      InvoiceID:
+        name: transaction_id
+        data_type: STRING
+      # TRANSACTION_LINE_ID:
+      #   name: transaction_line_id
+      #   data_type: STRING
+      CustomerID:
+        name: customer_id
+        data_type: STRING
+      InvoiceDate:
+        name: transaction_dt
+        data_type: TIMESTAMP
+      CustomerVehicleID:
+        name: customer_vehicle_id
+        data_type: STRING
+      BranchID:
+        name: branch_id
+        data_type: STRING
+      ServiceItemCode:
+        name: product_code
+        data_type: STRING
+      ServicePackageName:
+        name: package_name
+        data_type: STRING
+      sku:
+        name: product_id
+        data_type: STRING
+      ServiceItemCostAmount:
+        name: net_cost
+        data_type: FLOAT
+      InvoiceTotalAmount:
+        name: sales_amount
+        data_type: FLOAT
+      ItemBaseQuantity:
+        name: quantity
+        data_type: INT
+      InvoiceBeforeTaxAmount:
+        name: sales_amount_net
+        data_type: FLOAT
+      InvoiceBeforeDiscountAmount:
+        name: sales_amount_catalog
+        data_type: FLOAT
+      InvoiceGrossMargin:
+        name: total_profit
+        data_type: FLOAT
+      hasDiscount:
+        name: has_discount
+        data_type: INT
+      IsFleet:
+        name: is_fleet
+        data_type: INT
+      IsPMS:
+        name: is_pms
+        data_type: INT
+      NewCustomer:
+        name: new_customer
+        data_type: INT
+      NewVehicle:
+        name: new_vehicle
+        data_type: INT
+      Warranty:
+        name: warranty
+        data_type: INT
+      ServiceItemGroupDefaultName:
+        name: product_category
+        data_type: STRING
+      WorkOrderMileage:
+        name: current_mileage
+        data_type: FLOAT
+      PreviousMileage:
+        name: previous_mileage
+        data_type: FLOAT
+      MileageBetweenVisits:
+        name: delta_mileage
+        data_type: FLOAT
+      MileageBetweenVisits_perc:
+        name: delta_mileage_perc
+        data_type: FLOAT
+      InvoiceGrossMargin_perc:
+        name: sales_amount_net_perc
+        data_type: FLOAT
+      InvoiceTotalDiscountAmount:
+        name: discount_amount
+        data_type: FLOAT
+      ServiceItemDefaultName:
+        name: product_sub_category
+        data_type: STRING
+      ServiceName:
+        name: product_family
+        data_type: STRING
+
+
+
+  customers:
+    fields:
+      CustomerID:
+        name: customer_id
+        data_type: STRING
+      CreationOn:
+        name: creation_on
+        data_type: DATE
+      ModifiedOn:
+        name: modified_on
+        data_type: DATE
+      UserTitle:
+        name: user_title
+        data_type: STRING
+      CustomerName:
+        name: customer_name
+        data_type: STRING
+      Mobile:
+        name: mobile
+        data_type: STRING
+      Mobile2:
+        name: mobile2
+        data_type: STRING
+      Email:
+        name: email
+        data_type: STRING
+      Gender:
+        name: gender
+        data_type: string
+      Nationality:
+        name: nationality
+        data_type: string
+      BirthDate:
+        name: birth_date
+        data_type: DATE
+      LocationName:
+        name: location_name
+        data_type: STRING
+      IsOwner:
+        name: is_owner
+        data_type: BOOLEAN
+      IsCashCustomer:
+        name: is_cash_customer
+        data_type: BOOLEAN
+      PayTerm:
+        name: payterm
+        data_type: STRING
+      Age:
+        name: age
+        data_type: INT
+      IsActive:
+        name: is_active
+        data_type: BOOLEAN
+      StationBrand:
+        name: station_brand
+        data_type: STRING
+      ConsentStatus:
+        name: consent_status
+        data_type: STRING
+      ConsentAcquisitionDate:
+        name: consent_acquisition_date
+        data_type: DATE
+  
+  vehicles:
+    fields:
+      CustomerVehicleID:
+        name: customer_vehicle_id
+        data_type: STRING
+      CreationOn:
+        name: creation_on
+        data_type: DATE
+      ModifiedOn:
+        name: modified_on
+        data_type: DATE
+      CustomerID:
+        name: customer_id
+        data_type: STRING
+      Make:
+        name: maker
+        data_type: STRING
+      is_truck:
+        name: is_truck
+        data_type: INTEGER
+      Model:
+        name: model
+        data_type: STRING
+      ModelYear:
+        name: model_year
+        data_type: FLOAT
+      TransmissionType:
+        name: transmission_type
+        data_type: STRING
+      PMSName:
+        name: pms_name
+        data_type: string
+      PlateNumber:
+        name: plate_number
+        data_type: string
+      VIN:
+        name: code_vin
+        data_type: string
+      IsDriverOwner:
+        name: is_driver_owner
+        data_type: BOOLEAN
+      StationBrand:
+        name: station_brand
+        data_type: STRING
+      vehicle_brand_level:
+        name: vehicle_brand_level
+        data_type: STRING
+
+  branches:
+    fields:
+      BranchID:
+        name: branch_id
+        data_type: STRING
+      Longitude:
+        name: longitude
+        data_type: FLOAT
+      Latitude:
+        name: latitude
+        data_type: FLOAT
+      BranchCode:
+        name: branch_code
+        data_type: STRING
+      BranchType:
+        name: branch_type
+        data_type: STRING
+      IsActive:
+        name: is_active
+        data_type: BOOLEAN
+      BranchName:
+        name: branch_name
+        data_type: STRING
+      AMBadgeNo:
+        name: am_badge_number
+        data_type: STRING
+      AreaManager:
+        name: area_manager
+        data_type: STRING
+      Region:
+        name: region
+        data_type: string
+      RMBadgeNo:
+        name: rm_badge_number
+        data_type: string
+      RegionalManager:
+        name: regional_manager
+        data_type: string
+      City:
+        name: city
+        data_type: STRING
+      StationBrand:
+        name: station_brand
+        data_type: STRING
+
+  world_pop:
+    fields:
+      X:
+        name: latitude
+        data_type: FLOAT
+      Y:
+        name: longitude
+        data_type: FLOAT
+      Z:
+        name: pop_density
+        data_type: FLOAT
+
+
+transactions.spine_start_dt: 2023-03-01 # 2020-07-01
+transactions.spine_end_dt: 2026-04-01
+transactions.spine_frequency: '1M'
+
+transactions.spine_join_keys:
+  - '_id'
+  - '_observ_end_dt'
+
+transactions.customers_to_remove: None
+transactions.branches_to_drop: None
+transactions.products_to_drop: None
+
+
+# Features Brix
+# Transactions
+transactions.transactions.sequential: True
+transactions.transactions.keep_cols: ["_id", "_observ_end_dt"]
+
+# pyspark transactional features
+transactions.transactions.sales.instructions:
+  - object: feature_generation.v1.core.features.flags.expr_col
+    expr: DENSE_RANK() OVER (PARTITION BY _id ORDER BY _observ_end_dt ASC)
+    output: _observ_end_dt_rank
+
+  # Window features
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      - object: pyspark.sql.functions.sum
+      - object: pyspark.sql.functions.mean
+    inputs:
+      - month_total_sales
+      - month_net_sales
+      - month_total_profit
+      - month_total_cost
+      - month_total_amount_discounts
+      - month_total_qty_discounts
+      - month_avg_percent_discount
+      - month_total_discount_percentual
+      - month_avg_order
+      - month_distinct_transactions
+      - month_distinct_product_categories
+      - month_distinct_skus_sold
+      - is_active
+      - month_net_sales_category_oil
+      - month_total_amount_discounts_category_oil
+      - month_net_sales_share_oil
+      - month_net_sales_category_oil_synthetic
+      - month_total_amount_discounts_category_oil_synthetic
+      - month_net_sales_share_oil_synthetic
+      - has_oil
+      - has_oil_synthetic
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      - object: pyspark.sql.functions.max
+    inputs:
+      # - month_avg_run_mileage
+      # - oil_run_mileage
+      # - customer_run_mileage
+      # - customer_avg_mileage_per_day
+      # - month_avg_mileage_per_day
+      - month_net_sales
+      - month_avg_percent_discount
+      - month_total_discount_percentual
+      - month_avg_order
+      - month_distinct_transactions
+      - month_distinct_skus_sold
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      - object: pyspark.sql.functions.mean
+      # - object: pyspark.sql.functions.sum
+    inputs:
+      - month_avg_skus_per_order
+      - month_distinct_branches
+      - total_transactions_at_morning
+      - total_transactions_at_afternoon
+      - total_transactions_at_night
+      - total_transactions_at_afternight
+      - total_transactions_week_1
+      - total_transactions_week_2
+      - total_transactions_week_3
+      - total_transactions_week_4
+      - total_transactions_week_5
+      # - total_transactions_week_6
+      - month_net_sales_share_ac
+      - month_net_sales_share_additives
+      - month_net_sales_share_air_filter
+      - month_net_sales_share_batteries
+      - month_net_sales_share_engine
+      - month_net_sales_share_fuel
+      - month_net_sales_share_gear
+      - month_net_sales_share_oil_filter
+      - month_net_sales_share_others
+      - month_net_sales_share_plug
+      - month_net_sales_share_transmission
+      - month_net_sales_share_tyres
+      - has_oil_filter
+      - has_air_filter
+      - has_ac
+      - has_tires
+      - has_batteries
+      - has_transmission
+      - has_engine
+      - has_additives
+      - has_plug
+      - has_fuel
+      - has_gear
+      - last_transaction_n_skus
+
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      # - object: pyspark.sql.functions.median
+      - object: pyspark.sql.functions.mode
+    inputs:
+      - most_frequent_day_of_week
+      - most_frequent_day_of_month
+      - most_frequent_week_transaction
+      - most_frequent_hour_transaction
+
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+
+transactions.transactions.mileage.instructions:
+  - object: feature_generation.v1.core.features.flags.expr_col
+    expr: DENSE_RANK() OVER (PARTITION BY _id ORDER BY _observ_end_dt ASC)
+    output: _observ_end_dt_rank
+
+  # Window features
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      - object: pyspark.sql.functions.sum
+      - object: pyspark.sql.functions.mean
+    inputs:
+      - month_total_sales
+      - month_net_sales
+      - month_total_profit
+      - month_total_cost
+      - month_total_amount_discounts
+      - month_total_qty_discounts
+      - month_avg_percent_discount
+      - month_total_discount_percentual
+      - month_avg_order
+      - month_distinct_transactions
+      - month_distinct_product_categories
+      - month_distinct_skus_sold
+      - is_active
+      - month_net_sales_category_oil
+      - month_total_amount_discounts_category_oil
+      - month_net_sales_share_oil
+      - month_net_sales_category_oil_synthetic
+      - month_total_amount_discounts_category_oil_synthetic
+      - month_net_sales_share_oil_synthetic
+      - has_oil
+      - has_oil_synthetic
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      - object: pyspark.sql.functions.max
+    inputs:
+      - month_avg_run_mileage
+      # - oil_run_mileage
+      # - customer_run_mileage
+      # - customer_avg_mileage_per_day
+      - month_avg_mileage_per_day
+      - month_net_sales
+      - month_avg_percent_discount
+      - month_total_discount_percentual
+      - month_avg_order
+      - month_distinct_transactions
+      - month_distinct_skus_sold
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      - object: pyspark.sql.functions.mean
+      # - object: pyspark.sql.functions.sum
+    inputs:
+      - month_avg_skus_per_order
+      - month_distinct_branches
+      - total_transactions_at_morning
+      - total_transactions_at_afternoon
+      - total_transactions_at_night
+      - total_transactions_at_afternight
+      - total_transactions_week_1
+      - total_transactions_week_2
+      - total_transactions_week_3
+      - total_transactions_week_4
+      - total_transactions_week_5
+      - total_transactions_week_6
+      - month_net_sales_share_ac
+      - month_net_sales_share_additives
+      - month_net_sales_share_air_filter
+      - month_net_sales_share_batteries
+      - month_net_sales_share_engine
+      - month_net_sales_share_fuel
+      - month_net_sales_share_gear
+      - month_net_sales_share_oil_filter
+      - month_net_sales_share_others
+      - month_net_sales_share_plug
+      - month_net_sales_share_transmission
+      - month_net_sales_share_tyres
+      - has_oil_filter
+      - has_air_filter
+      - has_ac
+      - has_tires
+      - has_batteries
+      - has_transmission
+      - has_engine
+      - has_additives
+      - has_plug
+      - has_fuel
+      - has_gear
+      - last_transaction_n_skus
+
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      # - object: pyspark.sql.functions.median
+      - object: pyspark.sql.functions.mode
+    inputs:
+      - most_frequent_day_of_week
+      - most_frequent_day_of_month
+      - most_frequent_week_transaction
+      - most_frequent_hour_transaction
+
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+    # suffix: _months
+    suffix: _months
+    windows:
+      - order_by:
+          - _observ_end_dt_rank
+        partition_by:
+          - _id
+
+transactions.transactions.column_level_instructions:
+  condition: "trx_flag == 1"
+  list_of_columns:
+    - month_avg_skus_per_order
+    - month_net_sales
+  functions:
+    - mean
+  windows: 
+    all: [[-11, 0], [-5,0], [-2,0]]
+  alias: order
+
+mileage.closed_station_list: []

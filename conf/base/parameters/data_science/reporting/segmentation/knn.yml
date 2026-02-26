@@ -1,0 +1,74 @@
+knn_search:
+  # assortment
+  assortment:
+    transactional:
+      - sale_amount_last_6_months
+      - sale_amount_last_mean_6_months
+      - avg_products_per_transaction_last_6_months
+      - product_count_last_6_months_top5_categories
+    # competitors:
+    #   - amount_all_competitors_around_500_meters
+    # geoespatial:
+    #   - number_of_marketplaces_in_a_ratio_of_500_meters
+    # demographic:
+    #   - store_size_m2
+    #   - pop_density
+  # inventory_availability
+  inventory_availability:
+    transactional:
+      - sale_amount_last_6_months
+      - sale_amount_last_mean_6_months
+      - avg_products_per_transaction_last_6_months
+      - product_count_last_6_months_top5_categories
+    # competitors:
+    #   - amount_all_competitors_around_500_meters
+    # geoespatial:
+    #   - number_of_marketplaces_in_a_ratio_of_500_meters
+    # demographic:
+    #   - store_size_m2
+    #   - pop_density
+
+  # commercial_systematic
+  commercial_systematic:
+    transactional:
+      - sale_amount_last_6_months_m2
+      - sale_amount_last_6_months
+      - sale_amount_last_mean_6_months
+      - product_count_last_6_months_top5_categories
+    # competitors:
+    #   - amount_all_competitors_around_500_meters
+    # geoespatial:
+    #   - number_of_marketplaces_in_a_ratio_of_500_meters
+    # demographic:
+    #   - store_size_m2
+    #   - pop_density
+
+  # effective_layout
+  effective_layout:
+    transactional:
+      - sale_amount_last_6_months_m2
+      - sale_amount_last_6_months
+      - sale_amount_last_mean_6_months
+      - product_count_last_6_months_top5_categories
+    # competitors:
+    #   - amount_all_competitors_around_500_meters
+    # geoespatial:
+    #   - number_of_marketplaces_in_a_ratio_of_500_meters
+    # demographic:
+    #   - store_size_m2
+    #   - pop_density
+
+  # effective_layout
+  loyalty_program:
+    transactional:
+      - sale_amount_last_6_months_m2
+      - sale_amount_last_6_months
+      - sale_amount_last_mean_6_months
+      - product_count_last_6_months_top5_categories
+    # competitors:
+    #   - amount_all_competitors_around_500_meters
+    # geoespatial:
+    #   - number_of_marketplaces_in_a_ratio_of_500_meters
+    # demographic:
+    #   - store_size_m2
+    #   - pop_density

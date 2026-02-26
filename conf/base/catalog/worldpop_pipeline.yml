@@ -1,0 +1,45 @@
+
+# set worldpop_paths = {
+#   "colombia": "col_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "mexico": "mex_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "brazil": "bra_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "argentina": "arg_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "peru": "per_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "ecuador": "ecu_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "panama": "pan_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "chile": "chl_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+#   "guatemala": "gtm_pd_2020_1km_UNadj_ASCII_XYZ.csv",
+# }
+
+saudi_arabia.worldpop.world_pop:
+  type: spark.SparkDataset
+  file_format: csv
+  load_args:
+    header: true
+  save_args:
+      mode: overwrite
+  filepath: data/01_raw/saudi_arabia/sau_pd_2020_1km_UNadj_ASCII_XYZ.csv
+
+saudi_arabia.worldpop.int_world_pop:
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+  filepath: data/02_intermediate/saudi_arabia/int_world_pop
+
+saudi_arabia.worldpop.prm_world_pop:
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+  filepath: data/03_primary/saudi_arabia/prm_world_pop
+
+saudi_arabia.worldpop.feat_client_urbanicity_spark:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/saudi_arabia/feat_client_urbanicity/worldpop_output.parquet
+  # layer: feature
+
+saudi_arabia.meshgrid:
+    type: pandas.CSVDataset
+    filepath: data/03_primary/saudi_arabia/meshgrid.csv
+    # layer: primary

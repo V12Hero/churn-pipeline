@@ -1,0 +1,44 @@
+ipython>=8.10
+jupyterlab>=3.0
+kedro-datasets>=3.0
+kedro-viz>=6.7.0
+kedro[jupyter]~=0.19.12
+notebook
+Cython==3.0.12
+scikit-learn
+setuptools
+numpy
+pandas
+pyspark
+numba
+shap
+lightgbm
+catboost
+xgboost
+h3
+kedro-datasets
+#pyrosm
+kedro-datasets[geopandas.GeoJSONDataSet,spark.SparkDataSet,pickle.PickleDataSet]
+unidecode
+mpu
+pyarrow
+# brix.feature-generation==0.7.3
+# ./packages/brix.feature_generation-0.7.3-py3-none-any.whl
+fastparquet
+folium
+h3
+geopy
+geopandas
+mrmr-selection
+osmium
+#pymssql
+pyodbc
+pyspark
+tabulate
+tqdm
+
+
+# azure-mgmt-network==29.0.0
+# azureml-dataprep-native==41.0.0
+# azureml-dataprep==5.1.0
+# azureml-sdk

@@ -1,0 +1,16 @@
+
+saudi_arabia.worldpop:
+  cols:
+    lat: "latitude"
+    lon: "longitude"
+    customer_id: "customer_id"
+  meshgrid_params:
+    countries:
+      - saudi_arabia
+    bbox: ${BBOX}
+    resolution: 1
+    storeCreatedAt: "01/01/16"
+    customer_id: 1
+
+countries_list:
+  - saudi_arabia

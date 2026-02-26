@@ -1,0 +1,35 @@
+
+saudi_arabia.spatial_mastertable.df_with_distance_poi:
+    type: pickle.PickleDataset
+    filepath: data/04_feature/saudi_arabia/df_with_distance_poi.pkl
+    # layer: feature
+
+saudi_arabia.spatial_mastertable.df_with_distance_subway_poi:
+    type: pickle.PickleDataset
+    filepath: data/04_feature/saudi_arabia/df_with_distance_subway_poi.pkl
+    # layer: feature
+
+saudi_arabia.spatial_mastertable.poi.feature:
+    type: pickle.PickleDataset
+    filepath: data/04_feature/saudi_arabia/users_poi.pkl
+    # layer: feature
+
+saudi_arabia.spatial_mastertable.highway.feature:
+    type: pickle.PickleDataset
+    filepath: data/04_feature/saudi_arabia/users_highway.pkl
+    # layer: feature
+
+saudi_arabia.spatial_mastertable.subway.feature:
+    type: pickle.PickleDataset
+    filepath: data/04_feature/saudi_arabia/users_subway.pkl
+    # layer: feature
+
+saudi_arabia.spatial_mastertable.joined.feature:
+    type: pickle.PickleDataset
+    filepath: data/05_model_input/saudi_arabia/spatial_mastertable.pkl
+    # layer: feature
+
+saudi_arabia.spatial_mastertable.raw_master_table:
+    type: pandas.CSVDataset
+    filepath: data/05_model_input/saudi_arabia/raw_spatial_master_table.csv
+    # layer: feature

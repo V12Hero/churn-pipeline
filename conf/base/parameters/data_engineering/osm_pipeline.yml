@@ -1,0 +1,38 @@
+
+
+anchor_osm_common_params: &common_params
+  # Intermediate layer -- geometry
+  apply: FALSE
+  coordinates:
+    latitud: NULL
+    longitud: NULL
+  epsg: NULL
+  cols_to_standarize: []
+  # Primary layer params
+  pivot: NULL
+  groups: NULL
+  aggregation: NULL
+  pre_features: NULL
+  post_features: NULL
+
+anchor_osm_poi: &osm_poi
+  source: "osm_poi"
+  <<: *common_params
+
+anchor_osm_highways: &osm_highways
+  source: "osm_highways"
+  <<: *common_params
+
+saudi_arabia.osm_filepath: "gcc-states-latest"
+saudi_arabia.bbox: ${BBOX.saudi_arabia} # jinja is run before globals
+saudi_arabia.country_name: saudi_arabia
+
+saudi_arabia.osm_poi:
+  <<: *osm_poi
+
+saudi_arabia.osm_highways:
+  <<: *osm_highways
+
+saudi_arabia.osm_subway:
+  <<: *osm_highways
+  source: "osm_subway"

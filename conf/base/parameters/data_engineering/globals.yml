@@ -1,0 +1,74 @@
+
+# global seed
+GLOBAL_SEED: 42
+
+# epsg map projections
+global_epsg: 4326
+
+# visit [http://bboxfinder.com/]
+# List of cities bounding boxes -- > Bogota / Medellin / Barranquilla & Cali Bounding Boxes
+
+# lon, lat format
+BBOX:
+  saudi_arabia:
+    jeddah:
+      lat: [21.393398, 21.867010]
+      lon: [39.026224, 39.323542]
+    mecca:
+      lat: [21.301467, 21.527759]
+      lon: [39.711608, 40.013389]
+    medina:
+      lat: [24.339108, 24.590044]
+      lon: [39.429110, 39.769686]
+    riyadh:
+      lat: [24.456223, 25.169223]
+      lon: [46.383677, 47.048349]
+    tabuk:
+      lat: [28.301939, 28.596557]
+      lon: [36.425211, 36.944315]
+    al_wajh:
+      lat: [26.159574, 26.296007]
+      lon: [36.410262, 36.544844]
+    damman:
+      lat: [26.045380, 26.858083]
+      lon: [49.634653, 50.369364]
+    al_hassa:
+      lat: [25.186520, 25.647934]
+      lon: [49.274272, 49.915599]
+    khamis:
+      lat: [18.142204, 18.427118]
+      lon: [42.372208, 42.908478]
+    taif:
+      lat: [21.178649, 21.400016]
+      lon: [40.271072, 40.598602]
+    jubail:
+      lat: [26.836584, 27.300048]
+      lon: [49.280666, 49.798397]
+    buraydah:
+      lat: [25.982592, 26.515905]
+      lon: [43.677172, 44.175677]
+    jizan:
+      lat: [16.738407, 17.000589]
+      lon: [42.438743, 42.814681]
+    yanbu:
+      lat: [23.922274, 24.216310]
+      lon: [37.847013, 38.335904]
+    al_kharj:
+      lat: [23.706736, 24.420224]
+      lon: [46.894197, 47.876101]
+    hail:
+      lat: [27.390580, 27.609234]
+      lon: [41.546154, 41.889477]
+
+
+
+# Common params between pipelines
+CUSTOMER_ID_COL: &customer_id_col "CustomerID"
+CLUSTER_COL: "cluster"
+# List of features generally used to block processing on certain nodes
+FEATURE_BLOCKLIST:
+  - *customer_id_col
+  - evaluation_date
+  - created_date
+
+join_col: *customer_id_col

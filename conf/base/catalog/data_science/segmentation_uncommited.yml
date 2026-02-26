@@ -1,0 +1,125 @@
+# Here you can define all your data sets by using simple YAML syntax.
+#
+# Documentation for this file format can be found in "The Data Catalog"
+# Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+_spark_parquet_dataset: &_spark_parquet_dataset
+  type: spark.SparkDataset
+  file_format: parquet
+  save_args:
+    mode: overwrite
+
+_excel_dataset: &_excel_dataset
+  type: pandas.ExcelDataset
+
+_pandas_parquet_dataset: &_pandas_parquet_dataset
+  type: pandas.ParquetDataset
+
+# Segmentation
+uncommited.segmentation_master_filtered@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/05_model_input/segmentation/uncommited/segmentation_master_filtered
+  # layer: 05_model_input
+  # versioned: true
+
+uncommited.segmentation_master_filtered@pandas:
+  <<: *_pandas_parquet_dataset
+  filepath: data/05_model_input/segmentation/uncommited/segmentation_master_filtered
+  # layer: 05_model_input
+  # versioned: true
+
+uncommited.segmentation_model_params_artifact:
+  # type: kedro_mlflow.io.models.MlflowModelSaverDataSet
+  type: pickle.PickleDataset
+  # flavor: mlflow.sklearn
+  filepath: data/06_models/segmentation/uncommited/segmentation_model_artifact_params.pkl
+  backend: joblib
+  # layer: 06_models
+  # versioned: true
+
+uncommited.segmentation_model_artifact:
+  type: pickle.PickleDataset
+  filepath: data/06_models/segmentation/uncommited/segmentation_model_artifact.pkl
+  backend: joblib
+  # layer: 06_models
+
+uncommited.segmentation_centroids:
+  type: pickle.PickleDataset
+  filepath: data/07_model_output/segmentation/uncommited/segmentation_centroids.pkl
+  backend: joblib
+  # layer: 07_model_output
+
+
+uncommited.segmentation_wcss_feature_importance:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/segmentation/uncommited/segmentation_wcss_feature_importance.csv
+  # layer: 07_model_output
+
+uncommited.segmentation_unsupervised_feature_importance:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/segmentation/uncommited/segmentation_unsupervised_feature_importance.csv
+  # layer: 07_model_output
+
+
+uncommited.segmentation_model_output@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/07_model_output/segmentation/uncommited/segmentation_model_output.parquet
+  # versioned: true
+  # layer: 07_model_output
+
+
+uncommited.segmentation_model_output@pandas:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/segmentation/uncommited/segmentation_model_output.parquet
+  # versioned: true
+  # layer: 07_model_output
+
+uncommited.segmentation_master_filtered_prediction@spark:
+  <<: *_spark_parquet_dataset
+  filepath: data/05_model_input/segmentation/uncommited/segmentation_master_filtered_prediction
+  # layer: 05_model_input
+  # versioned: true
+
+uncommited.segmentation_master_filtered_prediction@pandas:
+  <<: *_pandas_parquet_dataset
+  filepath: data/05_model_input/segmentation/uncommited/segmentation_master_filtered_prediction
+  # layer: 05_model_input
+  # versioned: true
+
+# # Save reporting on MLflow artifacts
+uncommited.geographic_cluster_report:
+  type: text.TextDataset
+  filepath: data/08_reporting/segmentation/uncommited/html_reports/geographic_uncommited.html
+  fs_args:
+    open_args_save:
+      encoding: "utf-8"
+  # versioned: true
+  # layer: 08_reporting
+
+
+uncommited.transactional_cluster_report:
+  type: text.TextDataset
+  filepath: data/08_reporting/segmentation/uncommited/html_reports/transactional_cluster_report.html
+  fs_args:
+    open_args_save:
+      encoding: "utf-8"
+  versioned: true
+  # layer: 08_reporting
+  # artifact_path: uncommited/transactional_report
+
+uncommited.inertia_cluster_plot:
+  type: plotly.JSONDataset
+  filepath: data/08_reporting/segmentation/uncommited/plotly/inertia_plot.json
+  save_args:
+    engine: auto
+  # versioned: true
+  # layer: 08_reporting
+  # artifact_path: uncommited/inertia_plot
+
+
+uncommited.segmentation_excel_report:
+  <<: *_excel_dataset
+  filepath: data/08_reporting/segmentation/uncommited/excel_segmentation_report_uncommited.xlsx
+  # layer: 08_reporting
+  load_args:
+    sheet_name: "median"
+  # versioned: true

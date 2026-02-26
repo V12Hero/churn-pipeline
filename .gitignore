@@ -1,0 +1,143 @@
+############################
+# OS / Editor / IDE
+############################
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.vim
+*.vsmacros
+
+############################
+# Python
+############################
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.so
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.pytype/
+.ruff_cache/
+.ipynb_checkpoints/
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+
+############################
+# Virtual environments
+############################
+venv/
+.venv/
+env/
+ENV/
+conda-env/
+.python-version
+
+############################
+# Jupyter / notebooks outputs
+############################
+notebooks/.ipynb_checkpoints/
+notebooks/**/.ipynb_checkpoints/
+
+############################
+# Logs
+############################
+*.log
+
+############################
+# Temp / runtime
+############################
+.tmp/
+tmp/
+temp/
+**/.tmp/
+**/tmp/
+**/temp/
+
+# Spark / block manager shuffle files (you have these)
+**/blockmgr-*/
+**/blockmgr-*/**/*
+**/shuffle_*.data
+
+############################
+# Data (keep directory structure, ignore contents)
+############################
+# Common practice: keep empty dirs tracked via .gitkeep
+data/**
+!data/**/.gitkeep
+!data/README.md
+
+# If you keep some small reference data in repo, whitelist it here, e.g.:
+# !data/00_reference/**
+# !data/00_reference/**/*
+# (add as needed)
+
+############################
+# Model artifacts & outputs
+############################
+# Pickles / numpy arrays often contain models or large intermediates
+*.pkl
+*.pth
+*.pt
+*.npz
+*.npy
+*.sav
+
+# Predictions / generated artifacts (you had mdl_churn_predicted, etc.)
+data/07_model_output/
+data/**/model_output/
+data/**/predict/
+data/**/predictions/
+data/**/outputs/
+
+############################
+# Large datasets / geospatial
+############################
+# OSM / GIS data tends to be huge
+*.pbf
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.prj
+*.wkt
+*.dgn
+*.dxf
+*.tif
+*.tiff
+*.feather
+*.orc
+*.parquet
+
+############################
+# Archives / binaries
+############################
+*.zip
+*.gz
+*.bz2
+*.xz
+*.lzma
+*.jar
+*.exe
+*.bin
+*.whl
+
+############################
+# Secrets / keys / certs
+############################
+*.pem
+*.pfx
+*.key
+.env
+.env.*
+*.xlsx
+*.csv

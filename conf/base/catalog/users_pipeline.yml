@@ -1,0 +1,19 @@
+users.origin:
+    type: pandas.CSVDataset
+    filepath: data/01_raw/users_origin.csv
+    # layer: origin
+
+users.raw:
+    type: pickle.PickleDataset
+    filepath: data/01_raw/users.pkl
+    # layer: raw
+
+users.intermediate:
+    type: geopandas.GenericDataset
+    filepath: data/02_intermediate/users.geojson
+    # layer: intermediate
+
+users.primary:
+    type: geopandas.GenericDataset
+    filepath: data/03_primary/users.geojson
+    # layer: primary

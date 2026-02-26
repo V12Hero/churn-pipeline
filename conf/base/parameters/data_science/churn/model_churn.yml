@@ -1,0 +1,890 @@
+cols_to_drop:
+  - _observ_end_dt_rank
+  - target_churn_2
+  - target_churn_3
+  - acc_churn_past_2_next_0_months
+
+cv_date_column: _observ_end_dt
+cv_months_gap: 2
+cv_months_test: 1
+cv_splits: 5
+n_features_to_select: 20
+tol: 0.05
+direction: forward
+# direction: backward
+
+features: # Full R: 86 P: 88 | Without cluster info R: 86 P: 88
+  - avg_hour_transaction
+  - avg_n_places_within_0300m__All
+  - avg_n_places_within_0500m__community
+  - avg_n_places_within_0500m__educational_establishment
+  - avg_n_places_within_0500m__transportation
+  - avg_n_places_within_1000m__educational_establishment
+  - avg_n_places_within_1000m__facilities
+  - avg_n_places_within_1000m__hospitals
+  - avg_pop_density
+  - avg_week_transaction
+  - days_until_mineral_oil_change
+  - days_until_synthetic_oil_change
+  - estimated_days_to_change_mineral_oil
+  - estimated_days_to_change_synthetic_oil
+  - expected_number_of_visits_synthetic_oil
+  - is_active_sum_past_11_next_0_months
+  - is_active_sum_past_23_next_0_months
+  - is_active_sum_past_5_next_0_months
+  - is_new_joiner
+  - is_toyota
+  - month_avg_mileage_per_day
+  - month_avg_run_mileage
+  - month_avg_run_period
+  - month_distinct_skus_sold_sum_past_11_next_0_months
+  - month_distinct_skus_sold_sum_past_5_next_0_months
+  - month_min_current_mileage
+  - month_net_sales_category_oil_synthetic_sum_past_5_next_0_months
+  - month_net_sales_max_past_5_next_0_months
+  - month_total_amount_discounts_category_oil_mean_past_23_next_0_months
+  - month_total_cost_category_oil
+  - month_total_cost_category_oil_synthetic
+  - month_total_profit_category_oil
+  - month_total_profit_category_plug
+  - most_trx_branch_n_places_within_0300m__All
+  - most_trx_branch_n_places_within_1000m__restaurants
+  - total_transactions_week_1_mean_past_23_next_0_months
+  - total_transactions_week_2_mean_past_23_next_0_months
+  - total_transactions_week_3_mean_past_23_next_0_months
+  - total_transactions_week_4_mean_past_23_next_0_months
+  - total_transactions_week_5_mean_past_23_next_0_months
+
+  ## cluster_id
+  # - loyal__0
+  # - loyal__1
+  # - loyal__2
+  # - loyal__3
+  # - loyal__4
+  # - new_joiner__0
+  # - new_joiner__1
+  # - new_joiner__2
+  # - new_joiner__3
+  # - new_joiner__4
+  # - potential_loyal__0
+  # - potential_loyal__1
+  # - potential_loyal__2
+  # - potential_loyal__3
+  # - uncommited__0
+  # - uncommited__1
+  # - uncommited__2
+  # - uncommited__3
+  # - uncommited__4
+  # - uncommited__5
+  # - uncommited__6
+  # - loyal__full_price__0
+  # - loyal__full_price__1
+  # - loyal__full_price__2
+  # - loyal__full_price__3
+  # - loyal__full_price__4
+  # - loyal__mixed_price__0
+  # - loyal__mixed_price__1
+  # - loyal__mixed_price__2
+  # - loyal__mixed_price__3
+  # - loyal__mixed_price__4
+  # - loyal__promo_hunter__0
+  # - loyal__promo_hunter__1
+  # - loyal__promo_hunter__2
+  # - loyal__promo_hunter__3
+  # - loyal__promo_hunter__4
+  # - new_joiner__full_price__0
+  # - new_joiner__full_price__1
+  # - new_joiner__full_price__2
+  # - new_joiner__full_price__3
+  # - new_joiner__full_price__4
+  # - new_joiner__mixed_price__0
+  # - new_joiner__mixed_price__1
+  # - new_joiner__mixed_price__2
+  # - new_joiner__mixed_price__3
+  # - new_joiner__mixed_price__4
+  # - new_joiner__promo_hunter__0
+  # - new_joiner__promo_hunter__1
+  # - new_joiner__promo_hunter__2
+  # - new_joiner__promo_hunter__3
+  # - new_joiner__promo_hunter__4
+  # - potential_loyal__full_price__0
+  # # - potential_loyal__full_price__1
+  # - potential_loyal__full_price__2
+  # - potential_loyal__full_price__3
+  # - potential_loyal__mixed_price__0
+  # - potential_loyal__mixed_price__1
+  # - potential_loyal__mixed_price__2
+  # - potential_loyal__mixed_price__3
+  # - potential_loyal__promo_hunter__0
+  # - potential_loyal__promo_hunter__1
+  # - potential_loyal__promo_hunter__2
+  # - potential_loyal__promo_hunter__3
+  # - uncommited__full_price__1
+  # - uncommited__full_price__2
+  # - uncommited__full_price__3
+  # - uncommited__full_price__4
+  # - uncommited__full_price__5
+  # - uncommited__full_price__6
+  # - uncommited__mixed_price__0
+  # - uncommited__mixed_price__1
+  # - uncommited__mixed_price__2
+  # - uncommited__mixed_price__3
+  # - uncommited__mixed_price__4
+  # - uncommited__mixed_price__5
+  # - uncommited__mixed_price__6
+  # - uncommited__promo_hunter__0
+  # - uncommited__promo_hunter__1
+  # - uncommited__promo_hunter__2
+  # - uncommited__promo_hunter__3
+  # - uncommited__promo_hunter__4
+  # - uncommited__promo_hunter__5
+  # - uncommited__promo_hunter__6
+
+selected_features: #R: 86 P 86
+  - 'avg_hour_transaction' 
+  - 'avg_n_places_within_0300m__All' 
+  - 'avg_n_places_within_0500m__community' 
+  - 'avg_n_places_within_0500m__transportation' 
+  - 'avg_n_places_within_1000m__facilities' 
+  - 'avg_n_places_within_1000m__hospitals' 
+  - 'avg_pop_density' 
+  - 'avg_week_transaction' 
+  - 'is_active_sum_past_5_next_0_months' 
+  - 'is_new_joiner' 
+  - 'is_toyota' 
+  - 'month_avg_run_period' 
+  - 'month_distinct_skus_sold_sum_past_11_next_0_months' 
+  - 'month_total_amount_discounts_category_oil_mean_past_23_next_0_months' 
+  - 'month_total_profit_category_plug' 
+  - 'most_trx_branch_n_places_within_0300m__All' 
+  - 'most_trx_branch_n_places_within_1000m__restaurants' 
+  - 'total_transactions_week_1_mean_past_23_next_0_months' 
+  - 'total_transactions_week_2_mean_past_23_next_0_months' 
+  - 'total_transactions_week_5_mean_past_23_next_0_months'
+
+filter_model_conditions:
+  # - _observ_end_dt >= first_order_dt
+  - _observ_end_dt < "2024-01-01" # To Be update before training
+  - _observ_end_dt >= "2022-01-01"
+  - target_churn_1 IS NOT NULL
+  # - is_active > 0
+  - below_estimated_mineral_oil_change > 0
+  - acc_churn_past_2_next_0_months < 2
+  - is_active_sum_past_11_next_0_months > 0
+  # - is_active_sum_past_23_next_0_months > 3
+
+filter_churn_validation:
+- _observ_end_dt < "2025-05-01"
+- _observ_end_dt >= "2024-09-01" # To Be update before training
+- target_churn_1 IS NOT NULL
+# - is_active > 0
+- below_estimated_mineral_oil_change > 0
+- acc_churn_past_2_next_0_months < 2
+- is_active_sum_past_11_next_0_months > 0
+# - is_active_sum_past_23_next_0_months > 3
+
+filter_churn_predict:
+  # - is_active_mean_past_11_next_0_months > 0
+  - _observ_end_dt >= "2026-02-01" # To Be update before predict
+  - _observ_end_dt  < "2026-03-01" # To Be update before predict
+  # - is_active_sum_past_11_next_0_months > 1
+  # - _observ_end_dt == "${spine_end_dt}"
+
+max_train_size: null
+# Prediction definition
+probability_threshold: 0.5
+
+special_cols:
+- _id
+- _observ_end_dt
+# - client_name
+# - client_last_name
+target: target_churn_1
+tuning_iterations: 150
+tuning_metric_to_maximize: recall
+tuning_params_distribution:
+  colsample_bytree:
+  - 0.7
+  - 0.9
+  is_unbalance:
+  - true
+  lambda_l1:
+  - 0
+  lambda_l2:
+  - 0
+  learning_rate:
+  - 0.01
+  - 0.05
+  - 0.1
+  - 0.2
+  - 0.5
+  max_depth:
+  - 5
+  - 3
+  - -1
+  n_estimators:
+  - 300
+  - 100
+tuning_scoring:
+  - recall
+  - precision
+  - f1
+  - ks
+  - average_precision
+undersampling_rate: null
+
+universe_of_features:
+ - month_total_sales
+ - month_net_sales
+ - month_total_profit
+ - month_total_cost
+ - month_total_amount_discounts
+ - month_total_qty_discounts
+ - month_avg_percent_discount
+ - month_distinct_skus_sold
+ - month_distinct_branches
+ - month_distinct_product_categories
+ - month_distinct_transactions
+ - month_total_discount_percentual
+ - month_avg_order
+ - month_avg_skus_per_order
+ - month_net_sales_category_ac
+ - month_total_profit_category_ac
+ - month_total_cost_category_ac
+ - month_total_amount_discounts_category_ac
+ - month_total_qty_discounts_category_ac
+ - month_net_sales_category_additives
+ - month_total_profit_category_additives
+ - month_total_cost_category_additives
+ - month_total_amount_discounts_category_additives
+ - month_total_qty_discounts_category_additives
+ - month_net_sales_category_air_filter
+ - month_total_profit_category_air_filter
+ - month_total_cost_category_air_filter
+ - month_total_amount_discounts_category_air_filter
+ - month_total_qty_discounts_category_air_filter
+ - month_net_sales_category_batteries
+ - month_total_profit_category_batteries
+ - month_total_cost_category_batteries
+ - month_total_amount_discounts_category_batteries
+ - month_total_qty_discounts_category_batteries
+ - month_net_sales_category_brake
+ - month_total_profit_category_brake
+ - month_total_cost_category_brake
+ - month_total_amount_discounts_category_brake
+ - month_total_qty_discounts_category_brake
+ - month_net_sales_category_coolant
+ - month_total_profit_category_coolant
+ - month_total_cost_category_coolant
+ - month_total_amount_discounts_category_coolant
+ - month_total_qty_discounts_category_coolant
+ - month_net_sales_category_engine
+ - month_total_profit_category_engine
+ - month_total_cost_category_engine
+ - month_total_amount_discounts_category_engine
+ - month_total_qty_discounts_category_engine
+ - month_net_sales_category_fuel
+ - month_total_profit_category_fuel
+ - month_total_cost_category_fuel
+ - month_total_amount_discounts_category_fuel
+ - month_total_qty_discounts_category_fuel
+ - month_net_sales_category_gear
+ - month_total_profit_category_gear
+ - month_total_cost_category_gear
+ - month_total_amount_discounts_category_gear
+ - month_total_qty_discounts_category_gear
+ - month_net_sales_category_oil
+ - month_total_profit_category_oil
+ - month_total_cost_category_oil
+ - month_total_amount_discounts_category_oil
+ - month_total_qty_discounts_category_oil
+ - month_net_sales_category_oil_filter
+ - month_total_profit_category_oil_filter
+ - month_total_cost_category_oil_filter
+ - month_total_amount_discounts_category_oil_filter
+ - month_total_qty_discounts_category_oil_filter
+ - month_net_sales_category_oil_synthetic
+ - month_total_profit_category_oil_synthetic
+ - month_total_cost_category_oil_synthetic
+ - month_total_amount_discounts_category_oil_synthetic
+ - month_total_qty_discounts_category_oil_synthetic
+ - month_net_sales_category_others
+ - month_total_profit_category_others
+ - month_total_cost_category_others
+ - month_total_amount_discounts_category_others
+ - month_total_qty_discounts_category_others
+ - month_net_sales_category_plug
+ - month_total_profit_category_plug
+ - month_total_cost_category_plug
+ - month_total_amount_discounts_category_plug
+ - month_total_qty_discounts_category_plug
+ - month_net_sales_category_transmission
+ - month_total_profit_category_transmission
+ - month_total_cost_category_transmission
+ - month_total_amount_discounts_category_transmission
+ - month_total_qty_discounts_category_transmission
+ - month_net_sales_category_tyres
+ - month_total_profit_category_tyres
+ - month_total_cost_category_tyres
+ - month_total_amount_discounts_category_tyres
+ - month_total_qty_discounts_category_tyres
+ - month_avg_percent_discount_category_ac
+ - month_avg_percent_discount_category_additives
+ - month_avg_percent_discount_category_air_filter
+ - month_avg_percent_discount_category_batteries
+ - month_avg_percent_discount_category_brake
+ - month_avg_percent_discount_category_coolant
+ - month_avg_percent_discount_category_engine
+ - month_avg_percent_discount_category_fuel
+ - month_avg_percent_discount_category_gear
+ - month_avg_percent_discount_category_oil
+ - month_avg_percent_discount_category_oil_filter
+ - month_avg_percent_discount_category_oil_synthetic
+ - month_avg_percent_discount_category_others
+ - month_avg_percent_discount_category_plug
+ - month_avg_percent_discount_category_transmission
+ - month_avg_percent_discount_category_tyres
+#  - most_trx_branch_branch_id
+ - most_trx_branch_n_places_within_0300m__community
+ - most_trx_branch_n_places_within_0300m__educational_establishment
+ - most_trx_branch_n_places_within_0300m__entertainment
+ - most_trx_branch_n_places_within_0300m__facilities
+ - most_trx_branch_n_places_within_0300m__hospitals
+ - most_trx_branch_n_places_within_0300m__marketplaces
+ - most_trx_branch_n_places_within_0300m__payments
+ - most_trx_branch_n_places_within_0300m__restaurants
+ - most_trx_branch_n_places_within_0300m__transportation
+ - most_trx_branch_n_places_within_0300m__All
+ - most_trx_branch_n_places_within_0500m__community
+ - most_trx_branch_n_places_within_0500m__educational_establishment
+ - most_trx_branch_n_places_within_0500m__entertainment
+ - most_trx_branch_n_places_within_0500m__facilities
+ - most_trx_branch_n_places_within_0500m__hospitals
+ - most_trx_branch_n_places_within_0500m__marketplaces
+ - most_trx_branch_n_places_within_0500m__payments
+ - most_trx_branch_n_places_within_0500m__restaurants
+ - most_trx_branch_n_places_within_0500m__transportation
+ - most_trx_branch_n_places_within_0500m__All
+ - most_trx_branch_n_places_within_1000m__community
+ - most_trx_branch_n_places_within_1000m__educational_establishment
+ - most_trx_branch_n_places_within_1000m__entertainment
+ - most_trx_branch_n_places_within_1000m__facilities
+ - most_trx_branch_n_places_within_1000m__hospitals
+ - most_trx_branch_n_places_within_1000m__marketplaces
+ - most_trx_branch_n_places_within_1000m__payments
+ - most_trx_branch_n_places_within_1000m__restaurants
+ - most_trx_branch_n_places_within_1000m__transportation
+ - most_trx_branch_n_places_within_1000m__All
+ - most_trx_branch_pop_density
+ - avg_n_places_within_0300m__community
+ - avg_n_places_within_0300m__educational_establishment
+ - avg_n_places_within_0300m__entertainment
+ - avg_n_places_within_0300m__facilities
+ - avg_n_places_within_0300m__hospitals
+ - avg_n_places_within_0300m__marketplaces
+ - avg_n_places_within_0300m__payments
+ - avg_n_places_within_0300m__restaurants
+ - avg_n_places_within_0300m__transportation
+ - avg_n_places_within_0300m__All
+ - avg_n_places_within_0500m__community
+ - avg_n_places_within_0500m__educational_establishment
+ - avg_n_places_within_0500m__entertainment
+ - avg_n_places_within_0500m__facilities
+ - avg_n_places_within_0500m__hospitals
+ - avg_n_places_within_0500m__marketplaces
+ - avg_n_places_within_0500m__payments
+ - avg_n_places_within_0500m__restaurants
+ - avg_n_places_within_0500m__transportation
+ - avg_n_places_within_0500m__All
+ - avg_n_places_within_1000m__community
+ - avg_n_places_within_1000m__educational_establishment
+ - avg_n_places_within_1000m__entertainment
+ - avg_n_places_within_1000m__facilities
+ - avg_n_places_within_1000m__hospitals
+ - avg_n_places_within_1000m__marketplaces
+ - avg_n_places_within_1000m__payments
+ - avg_n_places_within_1000m__restaurants
+ - avg_n_places_within_1000m__transportation
+ - avg_n_places_within_1000m__All
+ - avg_pop_density
+ - car_age
+#  - car_age_group
+ - car_brand__very_low
+ - car_brand__low
+ - car_brand__medium
+ - car_brand__high
+ - car_brand__very_high
+ - car_age__None
+ - car_age__0_2
+ - car_age__3_5
+ - car_age__6_9
+ - car_age__10_plus
+ - is_toyota
+ - is_japanese
+ - is_american
+ - is_chinese
+ - is_truck
+ - avg_day_of_week
+ - most_frequent_day_of_week
+ - avg_day_of_month
+ - most_frequent_day_of_month
+ - total_transactions_at_weekday
+ - total_transactions_at_weekend
+ - avg_week_transaction
+#  - most_frequent_week_transaction
+ - avg_hour_transaction
+ - most_frequent_hour_transaction
+ - total_transactions_at_morning
+ - total_transactions_at_afternoon
+ - total_transactions_at_night
+ - total_transactions_at_afternight
+ - total_transactions_week_1
+ - total_transactions_week_2
+ - total_transactions_week_3
+ - total_transactions_week_4
+ - total_transactions_week_5
+#  - total_transactions_week_6 # TODO
+#  - transaction_id
+#  - last_transaction_dt
+ - last_trx_total_sales
+ - last_trx_net_sales
+ - last_trx_total_profit
+ - last_trx_total_cost
+ - last_trx_total_amount_discounts
+ - last_trx_total_qty_discounts
+ - last_trx_current_mileage
+ - last_trx_distinct_skus_sold
+ - last_trx_distinct_branches
+ - last_trx_distinct_product_categories
+ - last_trx_distinct_transactions
+ - has_oil
+ - has_oil_synthetic
+ - has_oil_filter
+ - has_air_filter
+ - has_ac
+ - has_tires
+ - has_batteries
+ - has_transmission
+ - has_engine
+ - has_additives
+ - has_plug
+ - has_fuel
+ - has_gear
+ - last_trx_total_discount_percentual
+ - last_transaction_n_skus
+#  - last_transaction_id
+ - is_active
+ - month_min_current_mileage
+ - month_max_current_mileage
+ - month_avg_run_mileage
+ - month_avg_run_period
+ - month_avg_mileage_per_day
+ - is_single_visit
+#  - is_multiple_visit
+ - month_avg_mileage_per_day_nullif_past_11_next_0_months
+ - estimated_days_to_change_mineral_oil
+ - estimated_days_to_change_synthetic_oil
+ - days_since_oil_last_transactions
+ - days_since_oil_synthetic_last_transactions
+ - days_until_mineral_oil_change
+ - days_until_synthetic_oil_change
+ - below_estimated_mineral_oil_change
+ - below_estimated_synthetic_oil_change
+ - month_net_sales_share_ac
+ - month_net_sales_share_additives
+ - month_net_sales_share_air_filter
+ - month_net_sales_share_batteries
+ - month_net_sales_share_brake
+ - month_net_sales_share_coolant
+ - month_net_sales_share_engine
+ - month_net_sales_share_fuel
+ - month_net_sales_share_gear
+ - month_net_sales_share_oil
+ - month_net_sales_share_oil_filter
+ - month_net_sales_share_oil_synthetic
+ - month_net_sales_share_others
+ - month_net_sales_share_plug
+ - month_net_sales_share_transmission
+ - month_net_sales_share_tyres
+ - customer_mineral_oil
+ - customer_synthetic_oil
+#  - is_churn
+#  - target_churn_1
+#  - target_churn_2
+#  - target_churn_3
+#  - acc_churn_past_2_next_0_months
+#  - target_mileage_1
+#  - first_visit_dt
+ - months_since_first_visit
+ - months_since_last_visit
+ - total_number_of_visits
+ - total_number_of_promo_visits
+ - total_number_of_visits_last_12_months
+ - total_number_of_promo_visits_last_12_months
+ - expected_number_of_visits_mineral_oil
+ - expected_number_of_visits_synthetic_oil
+ - is_new_joiner
+ - is_loyal
+ - is_potential_loyal
+ - is_uncommited
+ - is_lost
+ - is_gone
+ - is_promo_hunter
+ - is_full_price
+ - is_mixed_price
+#  - _observ_end_dt_rank
+ - month_total_sales_sum_past_23_next_0_months
+ - month_total_sales_sum_past_11_next_0_months
+ - month_total_sales_sum_past_5_next_0_months
+ - month_total_sales_mean_past_23_next_0_months
+ - month_total_sales_mean_past_11_next_0_months
+ - month_total_sales_mean_past_5_next_0_months
+ - month_net_sales_sum_past_23_next_0_months
+ - month_net_sales_sum_past_11_next_0_months
+ - month_net_sales_sum_past_5_next_0_months
+ - month_net_sales_mean_past_23_next_0_months
+ - month_net_sales_mean_past_11_next_0_months
+ - month_net_sales_mean_past_5_next_0_months
+ - month_total_profit_sum_past_23_next_0_months
+ - month_total_profit_sum_past_11_next_0_months
+ - month_total_profit_sum_past_5_next_0_months
+ - month_total_profit_mean_past_23_next_0_months
+ - month_total_profit_mean_past_11_next_0_months
+ - month_total_profit_mean_past_5_next_0_months
+ - month_total_cost_sum_past_23_next_0_months
+ - month_total_cost_sum_past_11_next_0_months
+ - month_total_cost_sum_past_5_next_0_months
+ - month_total_cost_mean_past_23_next_0_months
+ - month_total_cost_mean_past_11_next_0_months
+ - month_total_cost_mean_past_5_next_0_months
+ - month_total_amount_discounts_sum_past_23_next_0_months
+ - month_total_amount_discounts_sum_past_11_next_0_months
+ - month_total_amount_discounts_sum_past_5_next_0_months
+ - month_total_amount_discounts_mean_past_23_next_0_months
+ - month_total_amount_discounts_mean_past_11_next_0_months
+ - month_total_amount_discounts_mean_past_5_next_0_months
+ - month_total_qty_discounts_sum_past_23_next_0_months
+ - month_total_qty_discounts_sum_past_11_next_0_months
+ - month_total_qty_discounts_sum_past_5_next_0_months
+ - month_total_qty_discounts_mean_past_23_next_0_months
+ - month_total_qty_discounts_mean_past_11_next_0_months
+ - month_total_qty_discounts_mean_past_5_next_0_months
+ - month_avg_percent_discount_sum_past_23_next_0_months
+ - month_avg_percent_discount_sum_past_11_next_0_months
+ - month_avg_percent_discount_sum_past_5_next_0_months
+ - month_avg_percent_discount_mean_past_23_next_0_months
+ - month_avg_percent_discount_mean_past_11_next_0_months
+ - month_avg_percent_discount_mean_past_5_next_0_months
+ - month_total_discount_percentual_max_past_11_next_0_months
+ - month_total_discount_percentual_max_past_23_next_0_months
+ - month_total_discount_percentual_max_past_5_next_0_months
+ - month_total_discount_percentual_mean_past_11_next_0_months
+ - month_total_discount_percentual_mean_past_23_next_0_months
+ - month_total_discount_percentual_mean_past_5_next_0_months
+ - month_total_discount_percentual_sum_past_11_next_0_months
+ - month_total_discount_percentual_sum_past_23_next_0_months
+ - month_total_discount_percentual_sum_past_5_next_0_months
+ - month_avg_order_sum_past_23_next_0_months
+ - month_avg_order_sum_past_11_next_0_months
+ - month_avg_order_sum_past_5_next_0_months
+ - month_avg_order_mean_past_23_next_0_months
+ - month_avg_order_mean_past_11_next_0_months
+ - month_avg_order_mean_past_5_next_0_months
+ - month_distinct_transactions_sum_past_23_next_0_months
+ - month_distinct_transactions_sum_past_11_next_0_months
+ - month_distinct_transactions_sum_past_5_next_0_months
+ - month_distinct_transactions_mean_past_23_next_0_months
+ - month_distinct_transactions_mean_past_11_next_0_months
+ - month_distinct_transactions_mean_past_5_next_0_months
+ - month_distinct_product_categories_sum_past_23_next_0_months
+ - month_distinct_product_categories_sum_past_11_next_0_months
+ - month_distinct_product_categories_sum_past_5_next_0_months
+ - month_distinct_product_categories_mean_past_23_next_0_months
+ - month_distinct_product_categories_mean_past_11_next_0_months
+ - month_distinct_product_categories_mean_past_5_next_0_months
+ - month_distinct_skus_sold_sum_past_23_next_0_months
+ - month_distinct_skus_sold_sum_past_11_next_0_months
+ - month_distinct_skus_sold_sum_past_5_next_0_months
+ - month_distinct_skus_sold_mean_past_23_next_0_months
+ - month_distinct_skus_sold_mean_past_11_next_0_months
+ - month_distinct_skus_sold_mean_past_5_next_0_months
+ - is_active_sum_past_23_next_0_months
+ - is_active_sum_past_11_next_0_months
+ - is_active_sum_past_5_next_0_months
+ - is_active_mean_past_23_next_0_months
+ - is_active_mean_past_11_next_0_months
+ - is_active_mean_past_5_next_0_months
+ - month_net_sales_category_oil_sum_past_23_next_0_months
+ - month_net_sales_category_oil_sum_past_11_next_0_months
+ - month_net_sales_category_oil_sum_past_5_next_0_months
+ - month_net_sales_category_oil_mean_past_23_next_0_months
+ - month_net_sales_category_oil_mean_past_11_next_0_months
+ - month_net_sales_category_oil_mean_past_5_next_0_months
+ - month_total_amount_discounts_category_oil_sum_past_23_next_0_months
+ - month_total_amount_discounts_category_oil_sum_past_11_next_0_months
+ - month_total_amount_discounts_category_oil_sum_past_5_next_0_months
+ - month_total_amount_discounts_category_oil_mean_past_23_next_0_months
+ - month_total_amount_discounts_category_oil_mean_past_11_next_0_months
+ - month_total_amount_discounts_category_oil_mean_past_5_next_0_months
+ - month_net_sales_share_oil_sum_past_23_next_0_months
+ - month_net_sales_share_oil_sum_past_11_next_0_months
+ - month_net_sales_share_oil_sum_past_5_next_0_months
+ - month_net_sales_share_oil_mean_past_23_next_0_months
+ - month_net_sales_share_oil_mean_past_11_next_0_months
+ - month_net_sales_share_oil_mean_past_5_next_0_months
+ - month_net_sales_category_oil_synthetic_sum_past_23_next_0_months
+ - month_net_sales_category_oil_synthetic_sum_past_11_next_0_months
+ - month_net_sales_category_oil_synthetic_sum_past_5_next_0_months
+ - month_net_sales_category_oil_synthetic_mean_past_23_next_0_months
+ - month_net_sales_category_oil_synthetic_mean_past_11_next_0_months
+ - month_net_sales_category_oil_synthetic_mean_past_5_next_0_months
+ - month_total_amount_discounts_category_oil_synthetic_sum_past_23_next_0_months
+ - month_total_amount_discounts_category_oil_synthetic_sum_past_11_next_0_months
+ - month_total_amount_discounts_category_oil_synthetic_sum_past_5_next_0_months
+ - month_total_amount_discounts_category_oil_synthetic_mean_past_23_next_0_months
+ - month_total_amount_discounts_category_oil_synthetic_mean_past_11_next_0_months
+ - month_total_amount_discounts_category_oil_synthetic_mean_past_5_next_0_months
+ - month_net_sales_share_oil_synthetic_sum_past_23_next_0_months
+ - month_net_sales_share_oil_synthetic_sum_past_11_next_0_months
+ - month_net_sales_share_oil_synthetic_sum_past_5_next_0_months
+ - month_net_sales_share_oil_synthetic_mean_past_23_next_0_months
+ - month_net_sales_share_oil_synthetic_mean_past_11_next_0_months
+ - month_net_sales_share_oil_synthetic_mean_past_5_next_0_months
+ - has_oil_sum_past_23_next_0_months
+ - has_oil_sum_past_11_next_0_months
+ - has_oil_sum_past_5_next_0_months
+ - has_oil_mean_past_23_next_0_months
+ - has_oil_mean_past_11_next_0_months
+ - has_oil_mean_past_5_next_0_months
+ - has_oil_synthetic_sum_past_23_next_0_months
+ - has_oil_synthetic_sum_past_11_next_0_months
+ - has_oil_synthetic_sum_past_5_next_0_months
+ - has_oil_synthetic_mean_past_23_next_0_months
+ - has_oil_synthetic_mean_past_11_next_0_months
+ - has_oil_synthetic_mean_past_5_next_0_months
+#  - month_avg_run_mileage_max_past_23_next_0_months # TODO
+#  - month_avg_run_mileage_max_past_11_next_0_months
+#  - month_avg_run_mileage_max_past_5_next_0_months
+#  - month_avg_mileage_per_day_max_past_23_next_0_months
+#  - month_avg_mileage_per_day_max_past_11_next_0_months
+#  - month_avg_mileage_per_day_max_past_5_next_0_months
+ - month_net_sales_max_past_23_next_0_months
+ - month_net_sales_max_past_11_next_0_months
+ - month_net_sales_max_past_5_next_0_months
+ - month_avg_percent_discount_max_past_23_next_0_months
+ - month_avg_percent_discount_max_past_11_next_0_months
+ - month_avg_percent_discount_max_past_5_next_0_months
+ - month_avg_order_max_past_23_next_0_months
+ - month_avg_order_max_past_11_next_0_months
+ - month_avg_order_max_past_5_next_0_months
+ - month_distinct_transactions_max_past_23_next_0_months
+ - month_distinct_transactions_max_past_11_next_0_months
+ - month_distinct_transactions_max_past_5_next_0_months
+ - month_distinct_skus_sold_max_past_23_next_0_months
+ - month_distinct_skus_sold_max_past_11_next_0_months
+ - month_distinct_skus_sold_max_past_5_next_0_months
+ - month_avg_skus_per_order_mean_past_23_next_0_months
+ - month_avg_skus_per_order_mean_past_11_next_0_months
+ - month_avg_skus_per_order_mean_past_5_next_0_months
+ - month_distinct_branches_mean_past_23_next_0_months
+ - month_distinct_branches_mean_past_11_next_0_months
+ - month_distinct_branches_mean_past_5_next_0_months
+ - most_frequent_day_of_month_mode_past_11_next_0_months
+ - most_frequent_day_of_month_mode_past_23_next_0_months
+ - most_frequent_day_of_month_mode_past_5_next_0_months
+ - most_frequent_day_of_week_mode_past_11_next_0_months
+ - most_frequent_day_of_week_mode_past_23_next_0_months
+ - most_frequent_day_of_week_mode_past_5_next_0_months
+ - most_frequent_hour_transaction_mode_past_11_next_0_months
+ - most_frequent_hour_transaction_mode_past_23_next_0_months
+ - most_frequent_hour_transaction_mode_past_5_next_0_months
+ - most_frequent_week_transaction
+ - most_frequent_week_transaction_mode_past_11_next_0_months
+ - most_frequent_week_transaction_mode_past_23_next_0_months
+ - most_frequent_week_transaction_mode_past_5_next_0_months
+ - total_transactions_at_morning_mean_past_23_next_0_months
+ - total_transactions_at_morning_mean_past_11_next_0_months
+ - total_transactions_at_morning_mean_past_5_next_0_months
+ - total_transactions_at_afternoon_mean_past_23_next_0_months
+ - total_transactions_at_afternoon_mean_past_11_next_0_months
+ - total_transactions_at_afternoon_mean_past_5_next_0_months
+ - total_transactions_at_night_mean_past_23_next_0_months
+ - total_transactions_at_night_mean_past_11_next_0_months
+ - total_transactions_at_night_mean_past_5_next_0_months
+ - total_transactions_at_afternight_mean_past_23_next_0_months
+ - total_transactions_at_afternight_mean_past_11_next_0_months
+ - total_transactions_at_afternight_mean_past_5_next_0_months
+ - total_transactions_week_1_mean_past_23_next_0_months
+ - total_transactions_week_1_mean_past_11_next_0_months
+ - total_transactions_week_1_mean_past_5_next_0_months
+ - total_transactions_week_2_mean_past_23_next_0_months
+ - total_transactions_week_2_mean_past_11_next_0_months
+ - total_transactions_week_2_mean_past_5_next_0_months
+ - total_transactions_week_3_mean_past_23_next_0_months
+ - total_transactions_week_3_mean_past_11_next_0_months
+ - total_transactions_week_3_mean_past_5_next_0_months
+ - total_transactions_week_4_mean_past_23_next_0_months
+ - total_transactions_week_4_mean_past_11_next_0_months
+ - total_transactions_week_4_mean_past_5_next_0_months
+ - total_transactions_week_5_mean_past_23_next_0_months
+ - total_transactions_week_5_mean_past_11_next_0_months
+ - total_transactions_week_5_mean_past_5_next_0_months
+#  - total_transactions_week_6_mean_past_23_next_0_months
+#  - total_transactions_week_6_mean_past_11_next_0_months
+#  - total_transactions_week_6_mean_past_5_next_0_months
+ - month_net_sales_share_ac_mean_past_23_next_0_months
+ - month_net_sales_share_ac_mean_past_11_next_0_months
+ - month_net_sales_share_ac_mean_past_5_next_0_months
+ - month_net_sales_share_additives_mean_past_23_next_0_months
+ - month_net_sales_share_additives_mean_past_11_next_0_months
+ - month_net_sales_share_additives_mean_past_5_next_0_months
+ - month_net_sales_share_air_filter_mean_past_23_next_0_months
+ - month_net_sales_share_air_filter_mean_past_11_next_0_months
+ - month_net_sales_share_air_filter_mean_past_5_next_0_months
+ - month_net_sales_share_batteries_mean_past_23_next_0_months
+ - month_net_sales_share_batteries_mean_past_11_next_0_months
+ - month_net_sales_share_batteries_mean_past_5_next_0_months
+ - month_net_sales_share_engine_mean_past_23_next_0_months
+ - month_net_sales_share_engine_mean_past_11_next_0_months
+ - month_net_sales_share_engine_mean_past_5_next_0_months
+ - month_net_sales_share_fuel_mean_past_23_next_0_months
+ - month_net_sales_share_fuel_mean_past_11_next_0_months
+ - month_net_sales_share_fuel_mean_past_5_next_0_months
+ - month_net_sales_share_gear_mean_past_23_next_0_months
+ - month_net_sales_share_gear_mean_past_11_next_0_months
+ - month_net_sales_share_gear_mean_past_5_next_0_months
+ - month_net_sales_share_oil_filter_mean_past_23_next_0_months
+ - month_net_sales_share_oil_filter_mean_past_11_next_0_months
+ - month_net_sales_share_oil_filter_mean_past_5_next_0_months
+ - month_net_sales_share_others_mean_past_23_next_0_months
+ - month_net_sales_share_others_mean_past_11_next_0_months
+ - month_net_sales_share_others_mean_past_5_next_0_months
+ - month_net_sales_share_plug_mean_past_23_next_0_months
+ - month_net_sales_share_plug_mean_past_11_next_0_months
+ - month_net_sales_share_plug_mean_past_5_next_0_months
+ - month_net_sales_share_transmission_mean_past_23_next_0_months
+ - month_net_sales_share_transmission_mean_past_11_next_0_months
+ - month_net_sales_share_transmission_mean_past_5_next_0_months
+ - month_net_sales_share_tyres_mean_past_23_next_0_months
+ - month_net_sales_share_tyres_mean_past_11_next_0_months
+ - month_net_sales_share_tyres_mean_past_5_next_0_months
+ - has_oil_filter_mean_past_23_next_0_months
+ - has_oil_filter_mean_past_11_next_0_months
+ - has_oil_filter_mean_past_5_next_0_months
+ - has_air_filter_mean_past_23_next_0_months
+ - has_air_filter_mean_past_11_next_0_months
+ - has_air_filter_mean_past_5_next_0_months
+ - has_ac_mean_past_23_next_0_months
+ - has_ac_mean_past_11_next_0_months
+ - has_ac_mean_past_5_next_0_months
+ - has_tires_mean_past_23_next_0_months
+ - has_tires_mean_past_11_next_0_months
+ - has_tires_mean_past_5_next_0_months
+ - has_batteries_mean_past_23_next_0_months
+ - has_batteries_mean_past_11_next_0_months
+ - has_batteries_mean_past_5_next_0_months
+ - has_transmission_mean_past_23_next_0_months
+ - has_transmission_mean_past_11_next_0_months
+ - has_transmission_mean_past_5_next_0_months
+ - has_engine_mean_past_23_next_0_months
+ - has_engine_mean_past_11_next_0_months
+ - has_engine_mean_past_5_next_0_months
+ - has_additives_mean_past_23_next_0_months
+ - has_additives_mean_past_11_next_0_months
+ - has_additives_mean_past_5_next_0_months
+ - has_plug_mean_past_23_next_0_months
+ - has_plug_mean_past_11_next_0_months
+ - has_plug_mean_past_5_next_0_months
+ - has_fuel_mean_past_23_next_0_months
+ - has_fuel_mean_past_11_next_0_months
+ - has_fuel_mean_past_5_next_0_months
+ - has_gear_mean_past_23_next_0_months
+ - has_gear_mean_past_11_next_0_months
+ - has_gear_mean_past_5_next_0_months
+ - last_transaction_n_skus_mean_past_23_next_0_months
+ - last_transaction_n_skus_mean_past_11_next_0_months
+ - last_transaction_n_skus_mean_past_5_next_0_months
+ 
+#  - loyal__0
+#  - loyal__1
+#  - loyal__2
+#  - loyal__3
+#  - loyal__4
+#  - new_joiner__0
+#  - new_joiner__1
+#  - new_joiner__2
+#  - new_joiner__3
+#  - new_joiner__4
+#  - potential_loyal__0
+#  - potential_loyal__1
+#  - potential_loyal__2
+#  - potential_loyal__3
+#  - uncommited__0
+#  - uncommited__1
+#  - uncommited__2
+#  - uncommited__3
+#  - uncommited__4
+#  - uncommited__5
+#  - uncommited__6
+#  - loyal__full_price__0
+#  - loyal__full_price__1
+#  - loyal__full_price__2
+#  - loyal__full_price__3
+#  - loyal__full_price__4
+#  - loyal__mixed_price__0
+#  - loyal__mixed_price__1
+#  - loyal__mixed_price__2
+#  - loyal__mixed_price__3
+#  - loyal__mixed_price__4
+#  - loyal__promo_hunter__0
+#  - loyal__promo_hunter__1
+#  - loyal__promo_hunter__2
+#  - loyal__promo_hunter__3
+#  - loyal__promo_hunter__4
+#  - new_joiner__full_price__0
+#  - new_joiner__full_price__1
+#  - new_joiner__full_price__2
+#  - new_joiner__full_price__3
+#  - new_joiner__full_price__4
+#  - new_joiner__mixed_price__0
+#  - new_joiner__mixed_price__1
+#  - new_joiner__mixed_price__2
+#  - new_joiner__mixed_price__3
+#  - new_joiner__mixed_price__4
+#  - new_joiner__promo_hunter__0
+#  - new_joiner__promo_hunter__1
+#  - new_joiner__promo_hunter__2
+#  - new_joiner__promo_hunter__3
+#  - new_joiner__promo_hunter__4
+#  - potential_loyal__full_price__0
+# #  - potential_loyal__full_price__1
+#  - potential_loyal__full_price__2
+#  - potential_loyal__full_price__3
+#  - potential_loyal__mixed_price__0
+#  - potential_loyal__mixed_price__1
+#  - potential_loyal__mixed_price__2
+#  - potential_loyal__mixed_price__3
+#  - potential_loyal__promo_hunter__0
+#  - potential_loyal__promo_hunter__1
+#  - potential_loyal__promo_hunter__2
+#  - potential_loyal__promo_hunter__3
+#  - uncommited__full_price__1
+#  - uncommited__full_price__2
+#  - uncommited__full_price__3
+#  - uncommited__full_price__4
+#  - uncommited__full_price__5
+#  - uncommited__full_price__6
+#  - uncommited__mixed_price__0
+#  - uncommited__mixed_price__1
+#  - uncommited__mixed_price__2
+#  - uncommited__mixed_price__3
+#  - uncommited__mixed_price__4
+#  - uncommited__mixed_price__5
+#  - uncommited__mixed_price__6
+#  - uncommited__promo_hunter__0
+#  - uncommited__promo_hunter__1
+#  - uncommited__promo_hunter__2
+#  - uncommited__promo_hunter__3
+#  - uncommited__promo_hunter__4
+#  - uncommited__promo_hunter__5
+#  - uncommited__promo_hunter__6

@@ -1,0 +1,13 @@
+mastertable:
+  select_cols: null
+  join_col: "${CUSTOMER_ID_COL}"
+
+
+join_pipeline_params:
+  longitude: "longitude"
+  latitude: "latitude"
+  merge_method: "left"
+  customer_id: "customer_id"
+  point_column_name: "geometry"
+  countries_list:
+    - saudi_arabia

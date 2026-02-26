@@ -1,0 +1,90 @@
+
+## Highways
+
+saudi_arabia.osm_highways.origin:
+    type: segmentation_core.datasets.osm.CustomOSMDataset
+    filepath: data/01_raw/saudi_arabia/osm/merged.osm.pbf
+    load_args:
+        custom_filter: "${globals:OSM_FILTERS.highway_filter}"
+        filter_type: keep
+        keep_nodes: False
+        keep_ways: True
+        keep_relations: False
+    # layer: origin
+
+saudi_arabia.osm_highways.raw:
+  type: geopandas.GenericDataset
+  filepath: data/01_raw/saudi_arabia/osm/highways.geojson
+#   layer: raw
+
+saudi_arabia.osm_highways.intermediate:
+  type: geopandas.GenericDataset
+  filepath: data/02_intermediate/saudi_arabia/osm/highways.geojson
+#   layer: intermediate
+
+saudi_arabia.osm_highways.primary:
+  type: geopandas.GenericDataset
+  filepath: data/03_primary/saudi_arabia/osm/highways.geojson
+#   layer: primary
+
+
+## POI
+
+saudi_arabia.osm_poi.origin:
+    type: segmentation_core.datasets.osm.CustomOSMDataset
+    filepath: data/01_raw/saudi_arabia/osm/merged.osm.pbf
+    only_tags: True
+    load_args:
+        custom_filter: "${globals:OSM_FILTERS.poi_filter}"
+        filter_type: keep
+        keep_nodes: True
+        keep_ways: True
+        keep_relations: True
+    # layer: origin
+
+saudi_arabia.osm_poi.raw:
+  type: geopandas.GenericDataset
+  filepath: data/01_raw/saudi_arabia/osm/poi.geojson
+#   layer: raw
+
+saudi_arabia.osm_poi.intermediate:
+  type: geopandas.GenericDataset
+  filepath: data/02_intermediate/saudi_arabia/osm/poi.geojson
+#   layer: intermediate
+
+saudi_arabia.osm_poi.primary:
+  type: geopandas.GenericDataset
+  filepath: data/03_primary/saudi_arabia/osm/poi.geojson
+#   layer: primary
+
+
+## Subway
+
+saudi_arabia.osm_subway.origin:
+    type: segmentation_core.datasets.osm.CustomOSMDataset
+    filepath: data/01_raw/saudi_arabia/osm/merged.osm.pbf
+    only_tags: True
+    #query: "(railway == 'station') & (station == 'subway') & (aerialway != 'station')"
+    #query: "(railway == 'station') & (station == 'subway')"
+    load_args:
+        custom_filter: "${globals:OSM_FILTERS.subway_filter}"
+        filter_type: keep
+        keep_nodes: True
+        keep_ways: True
+        keep_relations: True
+    # layer: origin
+
+saudi_arabia.osm_subway.raw:
+  type: geopandas.GenericDataset
+  filepath: data/01_raw/saudi_arabia/osm/subway.geojson
+#   layer: raw
+
+saudi_arabia.osm_subway.intermediate:
+  type: geopandas.GenericDataset
+  filepath: data/02_intermediate/saudi_arabia/osm/subway.geojson
+#   layer: intermediate
+
+saudi_arabia.osm_subway.primary:
+  type: geopandas.GenericDataset
+  filepath: data/03_primary/saudi_arabia/osm/subway.geojson
+#   layer: primary

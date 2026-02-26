@@ -1,0 +1,26 @@
+
+users:
+  FETCH_DATA_FROM_ORIGIN: True
+  source: users
+  # Intermediate layer -- geometry
+  apply: TRUE
+  coordinates:
+    latitud: 'latitude'
+    longitud: 'longitude'
+  epsg: 4326
+  cols_to_standarize: []
+  # Primary layer
+  pivot: NULL
+  groups: NULL
+  aggregation: NULL
+  pre_features: NULL
+  post_features: NULL
+
+  primary_location_grid:
+    bbox: ${BBOX}
+    countries: ["saudi_arabia"]
+    city_filter: [""] # List of cities to filter on the análisis
+    resolution: 1
+    #todo take off this values since they are not needed in pipeline
+    storeCreatedAt: "01/01/16"
+    customer_id: 1
