@@ -11,11 +11,17 @@ import tqdm
 import logging
 from rich.logging import RichHandler
 
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
-SERVER = '20.203.36.211'
-DATABASE = 'MACDB'
-USERNAME = 'to.mckinsey'
-PASSWORD = 'Petromin@1'
+ENV_PATH = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=ENV_PATH, override=False)
+
+SERVER = os.getenv("SERVER")
+DATABASE = os.getenv("DATABASE")
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
 
 logging.basicConfig(
     format= "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -803,23 +809,23 @@ def main():
     logger.info("Start Ingestion Process")
 
     logger.info("Start General")
-    # ingestion_general()
+    ingestion_general()
 
     # # 20 minutes
-    # logger.info("Start Invoices")
-    # ingestion_invoices()
+    logger.info("Start Invoices")
+    ingestion_invoices()
     
     # # 23 minutes
-    # logger.info("Start Items PE")
-    # ingestion_invoice_items_PE(min_date)
+    logger.info("Start Items PE")
+    ingestion_invoice_items_PE(min_date)
 
     # # 1 minute
-    # logger.info("Start Items PAC")
-    # ingestion_invoice_items_PAC(min_date)
+    logger.info("Start Items PAC")
+    ingestion_invoice_items_PAC(min_date)
 
     # # 
-    # logger.info("Start Items")
-    # ingestion_items()
+    logger.info("Start Items")
+    ingestion_items()
 
     # 20 minutos
     logger.info("Start Transactions")
