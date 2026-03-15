@@ -444,3 +444,174 @@ To figure out what kind of marketing offer will work on a customer, the pipeline
 
 In the final Pandas `forecast_mileage` node, it literally just takes these 1/0 flags and turns them into text. So if a row has `is_potential_loyal = 1` and `is_promo_hunter = 1`, that customer hits the CRM as a **"Potential Loyal - Promo Hunter"**, making it incredibly easy for the marketing team to know exactly how to target them!
 
+# details of important part
+
+This is where the raw data truly transforms into a rich, predictive dataset. These five functions are the core feature-engineering engines of the `transactions_pipeline`. They calculate how much people drive, whether they've churned, what kind of promos they like, their loyalty status, and their rolling historical averages.
+
+Let's break them down one by one, looking at the code and the business logic driving it.
+
+---
+
+### 1. `create_mileage_features` (Odometer Forecasting)
+
+This function orchestrates a very complex task: estimating a customer's odometer reading today, based on their past visits. Because it's so complex, it delegates the work to several private helper functions.
+
+```python
+def create_mileage_features(
+    spine: pyspark.sql.DataFrame,
+    ftr_sales: pyspark.sql.DataFrame,
+    ftr_customer_vehicle: pyspark.sql.DataFrame,
+    oem_rules: pd.DataFrame,
+) -> pyspark.sql.DataFrame:
+
+    ftr_mileage_df = _compute_mileage_features(ftr_sales)
+    forecast_mileage_df = _compute_forecast_features(spine, ftr_mileage_df)
+    forecast_mileage_product_df = _compute_is_due_features(spine, forecast_mileage_df, ftr_customer_vehicle, oem_rules)
+    target_mileage_df = _compute_target_mileage_features(ftr_mileage_df)
+    # ... joins them all back to the spine
+
+```
+
+**Step-by-Step Breakdown:**
+
+* **`_compute_mileage_features`:** Calculates the "Mileage Per Day" (MPD). It takes the current odometer reading, subtracts the reading from the *last* visit, and divides by the days between visits. It caps unrealistic driving (e.g., MPD > 700 is nulled out as a likely typo by the mechanic).
+* **`_compute_forecast_features`:** This projects the odometer reading into the "future" (the current observation month).
+```python
+f.col("customer_days_since_last_trx") * f.col("customer_avg_mileage_per_day")
+
+```
+
+
+It multiplies the days since they were last seen by their historical average daily mileage to guess their current odometer reading.
+* **`_compute_is_due_features`:** It joins the vehicle's make/model with the `oem_rules` (the manufacturer's recommended maintenance schedule). If the forecasted mileage crosses the OEM threshold (e.g., 10,000km for synthetic oil), it triggers an `is_due` flag and calculates expected revenue.
+
+---
+
+### 2. `create_churn_features` (Target Definition)
+
+In a subscription business (like Netflix), churn is easy to define: they canceled their subscription. In retail/automotive, churn is "silent." This node defines the mathematical condition of a "churned" customer so the LightGBM model has a target to predict.
+
+```python
+    w_churn_acc = Window.partitionBy("_id").orderBy(f.col("_observ_end_dt")).rowsBetween(-2, 0)
+    win_id_monthly = Window.partitionBy("_id").orderBy(f.col("_observ_end_dt"))
+    
+    # ... joins ...
+
+    out = base_churn.withColumn(
+        "is_churn",
+        f.when(
+            (f.max("is_active").over(win_id_monthly.rowsBetween(0, 1)) > 0),
+            0
+        ).when(
+            (f.col("customer_mineral_oil") > 0) &
+            (f.col("is_due_mineral_oil") < 1),
+            0
+        ).when(
+            (f.col("customer_synthetic_oil") > 0) &
+            (f.col("is_due_synthetic_oil") < 1),
+            0
+        ).otherwise(1)
+    )
+
+```
+
+**Step-by-Step Breakdown:**
+
+* **The Default:** Assume everyone has churned (`otherwise(1)`).
+* **Condition 1 (Activity):** Look one month into the future (`rowsBetween(0, 1)`). If `is_active > 0` next month, they haven't churned (`0`).
+* **Condition 2 & 3 (Mileage Grace Period):** If they use Mineral or Synthetic oil, and according to the mileage forecaster they are *not yet due* for an oil change (`is_due... < 1`), they haven't churned (`0`). They are simply driving normally and don't need service yet.
+* **Target Creation:** It then shifts this `is_churn` flag backwards to create `target_churn_1` (did they churn 1 month from now), `target_churn_2`, etc.
+
+---
+
+### 3. `create_special_trx_features` (Campaign & Maintenance Tracking)
+
+This node isolates high-value transactions—specifically, Preventive Maintenance Services (PMS) and promotional packages.
+
+```python
+    promo_list = prm_promo.select("Promo").distinct().rdd.map(lambda r: r[0]).collect()
+
+    ftr_promo_monthly_trx = base_sales.withColumn(
+        "has_promo",
+        f.when(
+            f.upper("package_name").isin(*[promo.upper() for promo in promo_list]),
+            f.lit(1)
+        ).otherwise(f.lit(0))
+    )
+
+```
+
+**Step-by-Step Breakdown:**
+
+* It grabs the master list of active promotions from the `prm_promo` dataset.
+* It scans the `package_name` of every transaction. If the transaction matches a known promo, it flags `has_promo = 1`.
+* It groups these up by month, summing the net sales for promos (`promo_month_net_sales`) and counting the transactions.
+* It repeats this exact same logic for Preventive Maintenance Services (`is_pms == 1`).
+
+---
+
+### 4. `create_segment_features` (RFM & Loyalty Bucketing)
+
+This is where Recency, Frequency, and Monetary (RFM) logic lives. It builds the foundation for the business segments (Loyal, Promo Hunter, Lost).
+
+```python
+    out = base_segment.withColumn(
+        "expected_number_of_visits_mineral_oil",
+        f.floor((f.col("customer_avg_mileage_per_day") * f.lit(365)) / 5000)
+    ).withColumn(
+        "is_loyal",
+        f.when(
+            (f.col("total_number_of_visits_last_12_months") >= 3) &
+            (((f.col("customer_mineral_oil") > 0) & (f.col("total_number_of_visits_last_12_months") >= f.col("expected_number_of_visits_mineral_oil"))) |
+            ((f.col("customer_synthetic_oil") > 0) & (f.col("total_number_of_visits_last_12_months") >= f.col("expected_number_of_visits_synthetic_oil")))),
+            1
+        ).otherwise(0)
+    )
+
+```
+
+**Step-by-Step Breakdown:**
+
+* **Recency & Frequency:** Calculates `months_since_last_visit` and `total_number_of_visits_last_12_months` using rolling windows.
+* **Expected Visits:** It calculates how many times a year a customer *should* visit based on their specific daily mileage (`mpd * 365 / 5000`).
+* **Loyalty Flag:** A customer is flagged as `is_loyal = 1` if they visited at least 3 times in the last year **AND** their actual visits match or exceed their personalized expected visits.
+* **Price Segment:** It compares `total_number_of_visits` to `total_number_of_promo_visits`. If they are equal, the customer is flagged as `is_promo_hunter`.
+
+---
+
+### 5. `create_ftr_windows_transactions` (Rolling Aggregations)
+
+If you look closely at this code, you'll notice it doesn't actually contain any data manipulation logic!
+
+```python
+def create_ftr_windows_transactions(
+    input_data: pyspark.sql.DataFrame, instructions: tp.Dict, sequential: tp.Dict, params_keep_cols: None
+) -> pyspark.sql.DataFrame:
+    """Return transaction features."""
+
+    features = create_columns_from_config(input_data, instructions, sequential, params_keep_cols)
+
+    return features.orderBy(["_id", "_observ_end_dt"])
+
+```
+
+**Step-by-Step Breakdown:**
+
+* This is a wrapper function that relies on an external/internal library (`feature_generation.v1.nodes.features.create_column`).
+* Instead of writing hundreds of lines of PySpark `Window` functions, the developers opted for a **config-driven** approach.
+* It reads the YAML file (`transactions_pipeline.yml`), which contains blocks like this:
+```yaml
+  - object: feature_generation.v1.core.features.windows.generate_window_grid
+    funcs:
+      - object: pyspark.sql.functions.sum
+      - object: pyspark.sql.functions.mean
+    inputs:
+      - month_total_sales
+    ranges_between: [[-23, 0] ,[-11, 0], [-5, 0]]
+
+```
+
+
+* The `create_columns_from_config` engine reads that YAML and dynamically generates PySpark code to create columns like `month_total_sales_sum_past_5_months`, `month_total_sales_mean_past_11_months`, etc.
+
+---
