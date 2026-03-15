@@ -56,11 +56,7 @@ This is where the business logic is applied to create predictive features for th
 16. **`create_ftr_master`**: The final step. It takes the Spine and performs a massive sequence of `LEFT JOIN` operations, merging all the disparate feature tables (Sales, Mileage, Vehicle, Segmentation, Geolocation, Windows, Churn) into one flat, incredibly wide DataFrame.
 * *Optimization note:* Because joining a table this massive in Spark can cause memory crashes (spills), the code elegantly splits the customers into `active` and `inactive` groups, performs the joins on the smaller subsets, and then unions them back together at the end.
 
-
-
 The output of this pipeline is `ftr_master.parquet`. When this finishes, Kedro passes this flat table directly into your downstream data science pipelines (`predict_churn` and `mileage_model`) for ML training and inference.
-
-Would you like to dive deeper into the code of a specific node, such as the mathematical outlier detection in the mileage calculations, or move on to how the `churn_model` pipeline consumes this master table?
 
 
 # Predict Churn
