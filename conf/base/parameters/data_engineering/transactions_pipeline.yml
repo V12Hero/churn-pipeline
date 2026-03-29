@@ -505,8 +505,8 @@ transactions.schemas:
         data_type: FLOAT
 
 
-transactions.spine_start_dt: 2023-03-01 # 2020-07-01
-transactions.spine_end_dt: 2026-04-01
+transactions.spine_start_dt: 2023-04-01 # 2020-07-01
+transactions.spine_end_dt: 2026-05-01
 transactions.spine_frequency: '1M'
 
 transactions.spine_join_keys:

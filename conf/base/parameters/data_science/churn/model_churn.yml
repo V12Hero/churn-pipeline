@@ -185,8 +185,8 @@ filter_churn_validation:
 
 filter_churn_predict:
   # - is_active_mean_past_11_next_0_months > 0
-  - _observ_end_dt >= "2026-02-01" # To Be update before predict
-  - _observ_end_dt  < "2026-03-01" # To Be update before predict
+  - _observ_end_dt >= "2026-03-01" # To Be update before predict
+  - _observ_end_dt  < "2026-04-01" # To Be update before predict
   # - is_active_sum_past_11_next_0_months > 1
   # - _observ_end_dt == "${spine_end_dt}"
 
