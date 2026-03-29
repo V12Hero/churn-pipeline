@@ -1,3 +1,78 @@
+# ingestion_pipeline
+
+This `ingestion_pipeline.py` script is a classic **ETL (Extract, Transform, Load)** script. It acts as the bridge between Petromin’s live, operational SQL Server database (`MACDB`) and your Kedro data science environment. 
+
+Instead of forcing your PySpark data engineering pipelines to connect directly to the production database (which could slow it down or cause memory crashes), this script safely extracts the data, does some basic cleaning, and dumps it into highly compressed `.parquet` files in your `data/01_raw/` directory.
+
+
+
+Here is a detailed, step-by-step breakdown of how this script operates, followed by exactly how the `min_date` parameter is functioning.
+
+---
+
+### Step-by-Step Execution Breakdown
+
+When you run this script (triggering the `main()` function at the bottom), it executes in six distinct phases:
+
+#### 1. Setup and Connection
+* **The Code:** The script loads database credentials (Server, Database, Username, Password) from a hidden `.env` file to keep secrets out of version control. 
+* **`_get_conn()`:** Establishes an ODBC connection to the SQL Server.
+
+#### 2. Dimension Tables Extraction (`ingestion_general`)
+This step pulls the "metadata" tables: Branches, Promos, Customers, and Vehicles. Because Petromin operates under different sub-brands, it pulls data from two distinct views for each entity (e.g., `v_Customer` for PE and `v_PAC_Customer` for PAC) and concatenates them.
+* **Customer Cleaning:** It ensures Saudi mobile numbers are perfectly standardized to 10 digits and forces the `966` country code prefix (`ingest_customers`).
+* **Vehicle Cleaning:** This is a huge block of logic (`ingest_vehicles`). It takes messy, human-entered text from the cashiers and standardizes it. For example, it converts "cheverolet", "chevorlet", and "chevrolete" all to `"chevrolet"`. It does the same for car models (converting "mazda 3" and "mazda3" to just `"3"`). Finally, it assigns a `vehicle_brand_level` (e.g., Porsche = "very_high", Toyota = "high", Chery = "very_low").
+
+#### 3. Invoice Header Extraction (`ingestion_invoices`)
+* It connects to `v_Invoice` and `v_PAC_Invoice`.
+* To prevent pulling millions of rows into RAM at once and crashing the system, it uses a smart looping mechanism (`get_all_data_from_invoice_table`). It finds the oldest record, and then runs a separate `SELECT` query for *every single month* up to today, appending the results together.
+
+#### 4. Invoice Items Extraction (`ingestion_invoice_items_PE` & `PAC`)
+This is where the heavy lifting happens, as the items table contains a row for every single product sold on every invoice.
+* It uses `get_all_data_from_invoice_items_table`.
+* Because this table is so massive, it doesn't just query month-by-month; it actually **saves each month to disk** as a temporary parquet file (e.g., `data/01_raw/raw_invoices_items_PE_files/202603.parquet`). This keeps memory overhead incredibly low during the database extraction.
+
+#### 5. Merging and Calculating Items (`ingestion_items`)
+* It reads all those temporary PE and PAC item files back into Pandas.
+* It handles missing default names (filling nulls with "Service").
+* **SKU Creation:** It creates a highly specific composite string for the `sku` column by merging the Service Name, Macro Category, Default Name, Item Code, and Package Name.
+* **Financial Math:** It mathematically calculates the total invoice amounts, the total discounts, and the `InvoiceGrossMargin` (Taxed Amount minus Cost).
+
+#### 6. The Final Master Join (`prepare_transactions`)
+* It takes the clean `invoice_df` (the headers) and merges it with `invoice_items_df` (the line items) using an `INNER JOIN` on `InvoiceID`.
+* It does a final `groupby` to aggregate data at the specific line-item level. 
+* It calculates final percentages (`InvoiceGrossMargin_perc`) and evaluates odometer logic (`MileageBetweenVisits`).
+* It outputs the final `transactions_origin.parquet` file, which is exactly what your Kedro `transactions_pipeline` picks up in the next phase!
+
+---
+
+### How is the `min_date` Used?
+
+In the `main()` function, you can see `min_date` is hardcoded:
+```python
+def main():
+    min_date = "2026-03-01"
+```
+
+This variable acts as an **Incremental Load Trigger** (or Delta Load) specifically for the massive Invoice Items tables.
+
+**Here is exactly how it works:**
+1. It is passed into `ingestion_invoice_items_PE(min_date)` and `PAC(min_date)`.
+2. Inside `get_all_data_from_invoice_items_table`, it is used to define the starting point of a Pandas date range:
+   ```python
+   dates_list = pd.date_range(min_date, max_date, freq='1ME')
+   ```
+3. The script then loops through this `dates_list`. For every month in the list, it sends a query to SQL Server asking *only* for items attached to invoices modified in that specific year and month:
+   ```sql
+   WHERE YEAR(b.ModifiedOn) = {date.year} and Month(b.ModifiedOn) = {date.month}
+   ```
+
+**Why is this important?**
+If you look closely at the other generic extraction functions, they query the database for `MIN(ModifiedOn)` to figure out the start date—meaning they pull the *entire history of the database* every time the script runs. 
+
+By hardcoding `min_date = "2026-03-01"`, you are telling the script: *"Do not pull the entire history of Invoice Items. Only pull items from March 1st, 2026 up to today."* This drastically reduces execution time (from hours down to minutes) and database load. It assumes that older invoice items have already been downloaded in previous runs and don't need to be extracted again.
+
+
 # transaction Pipeline
 
 This is a beautifully structured data engineering pipeline. Looking at `pipeline.py` and the newly provided configuration files, the `transactions_pipeline` acts as an expansive feature factory. It takes raw, disparate data sources and systematically builds them up into a single, massive **Master Table** (`ftr_master`).
