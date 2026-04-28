@@ -500,16 +500,33 @@ def _compute_mileage_features(
             0
         ).otherwise(1)
     ).withColumn(
+        "personal_interval_km",
+        f.mean("customer_run_mileage").over(w_id_observ.rowsBetween(-11, 0)) # Rolling 12-month average of their actual km between visits
+    ).withColumn(
+        "smart_target_mineral",
+        f.when(
+            f.col("personal_interval_km").isNull(), f.lit(5000) # Fallback for new customers
+        ).when(
+            f.col("personal_interval_km") > 6000, f.lit(5000) # Cap for "leakers"
+        ).otherwise(f.col("personal_interval_km")) # Personalized interval for loyalists
+    ).withColumn(
+        "smart_target_synthetic",
+        f.when(
+            f.col("personal_interval_km").isNull(), f.lit(10000)
+        ).when(
+            f.col("personal_interval_km") > 12000, f.lit(10000)
+        ).otherwise(f.col("personal_interval_km"))
+    ).withColumn(
         "estimated_days_to_change_mineral_oil",
         f.when(
             f.col("month_min_current_mileage").isNotNull(),
-            f.round(f.lit(5000) / f.col("customer_avg_mileage_per_day")) # mineral oil
+            f.round(f.col("smart_target_mineral") / f.col("customer_avg_mileage_per_day")) # Use smart target instead of lit(5000)
         ).otherwise(None)
     ).withColumn(
         "estimated_days_to_change_synthetic_oil",
         f.when(
             f.col("month_min_current_mileage").isNotNull(),
-            f.round(f.lit(10000) / f.col("customer_avg_mileage_per_day")) # synthetic oil
+            f.round(f.col("smart_target_synthetic") / f.col("customer_avg_mileage_per_day")) # Use smart target instead of lit(10000)
         ).otherwise(None)
     ).withColumn(
         "estimated_days_to_change_mineral_oil",
