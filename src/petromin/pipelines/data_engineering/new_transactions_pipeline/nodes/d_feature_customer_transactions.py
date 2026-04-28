@@ -29,6 +29,8 @@ def create_segment_features(
             "last_transaction_dt",
             "month_distinct_transactions",
             "month_total_qty_discounts",
+            "smart_target_mineral",      # <-- NEW: Pulling the dynamic target
+            "smart_target_synthetic",
         ),
         on=["_id", "_observ_end_dt"],
         how="left"
@@ -111,10 +113,12 @@ def create_segment_features(
         f.sum("pms_month_net_sales").over(win_id_transaction.rowsBetween(-11, 0))
     ).withColumn(
         "expected_number_of_visits_mineral_oil",
-        f.floor((f.col("customer_avg_mileage_per_day") * f.lit(365)) / 5000)
+        # Replaced 5000 with the dynamic customer-specific target
+        f.floor((f.col("customer_avg_mileage_per_day") * f.lit(365)) / f.col("smart_target_mineral"))
     ).withColumn(
         "expected_number_of_visits_synthetic_oil",
-        f.floor((f.col("customer_avg_mileage_per_day") * f.lit(365)) / 10000)
+        # Replaced 10000 with the dynamic customer-specific target
+        f.floor((f.col("customer_avg_mileage_per_day") * f.lit(365)) / f.col("smart_target_synthetic"))
     ).withColumn(
         "is_new_joiner",
         f.when(
