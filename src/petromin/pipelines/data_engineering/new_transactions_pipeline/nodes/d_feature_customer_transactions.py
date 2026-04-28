@@ -29,8 +29,6 @@ def create_segment_features(
             "last_transaction_dt",
             "month_distinct_transactions",
             "month_total_qty_discounts",
-            "smart_target_mineral",      # <-- NEW: Pulling the dynamic target
-            "smart_target_synthetic",
         ),
         on=["_id", "_observ_end_dt"],
         how="left"
@@ -41,6 +39,8 @@ def create_segment_features(
             "customer_synthetic_oil",
             "customer_last_transaction_dt",
             "customer_avg_mileage_per_day",
+            "smart_target_mineral",      # <-- NEW: Pulling the dynamic target
+            "smart_target_synthetic",
         ),
         on=["_id", "_observ_end_dt"],
         how="left"
