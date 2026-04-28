@@ -579,7 +579,9 @@ def _compute_mileage_features(
         'customer_last_transaction_dt',
         'below_estimated_mineral_oil_change',
         'below_estimated_synthetic_oil_change',
-
+        'personal_interval_km',                 # <--- ADD THIS
+        'smart_target_mineral',                 # <--- ADD THIS
+        'smart_target_synthetic',
     )
 
     return out.orderBy("_id", "_observ_end_dt")
