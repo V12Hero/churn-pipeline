@@ -39,7 +39,7 @@ def create_segment_features(
             "customer_synthetic_oil",
             "customer_last_transaction_dt",
             "customer_avg_mileage_per_day",
-            "smart_target_mineral",      # <-- NEW: Pulling the dynamic target
+            "smart_target_mineral",
             "smart_target_synthetic",
         ),
         on=["_id", "_observ_end_dt"],
