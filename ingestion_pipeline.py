@@ -727,9 +727,9 @@ def ingestion_general():
     out = ingest_branches()
     out.to_parquet("data/01_raw/raw_branches.parquet", index=False)
 
-    logger.info("Promo")
-    out = ingest_promos()
-    out.to_parquet("data/01_raw/raw_promos.parquet", index=False)
+    # logger.info("Promo")
+    # out = ingest_promos()
+    # out.to_parquet("data/01_raw/raw_promos.parquet", index=False)
 
     logger.info("Customers")
     out = ingest_customers()
@@ -804,7 +804,7 @@ def prepare_transactions():
 
 def main():
 
-    min_date = "2026-03-01"
+    min_date = "2026-04-01"
 
     logger.info("Start Ingestion Process")
 
