@@ -808,8 +808,8 @@ def main():
 
     logger.info("Start Ingestion Process")
 
-    logger.info("Start General")
-    ingestion_general()
+    # logger.info("Start General")
+    # ingestion_general()
 
     # # 20 minutes
     logger.info("Start Invoices")
