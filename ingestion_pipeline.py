@@ -838,12 +838,12 @@ def prepare_transactions():
 
 def main():
 
-    min_date = "2026-04-01"
+    min_date = "2026-05-01"
 
     logger.info("Start Ingestion Process")
 
-    # logger.info("Start General")
-    # ingestion_general()
+    logger.info("Start General")
+    ingestion_general()
 
     # # 20 minutes
     logger.info("Start Invoices")
