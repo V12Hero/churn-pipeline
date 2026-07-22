@@ -727,9 +727,9 @@ def ingestion_general():
     out = ingest_branches()
     out.to_parquet("data/01_raw/raw_branches.parquet", index=False)
 
-    logger.info("Promo")
-    out = ingest_promos()
-    out.to_parquet("data/01_raw/raw_promos.parquet", index=False)
+    # logger.info("Promo")
+    # out = ingest_promos()
+    # out.to_parquet("data/01_raw/raw_promos.parquet", index=False)
 
     logger.info("Customers")
     out = ingest_customers()
