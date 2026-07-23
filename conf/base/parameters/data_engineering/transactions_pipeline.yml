@@ -506,7 +506,7 @@ transactions.schemas:
 
 
 transactions.spine_start_dt: 2023-05-01 # 2020-07-01
-transactions.spine_end_dt: 2026-06-01
+transactions.spine_end_dt: 2026-09-01
 transactions.spine_frequency: '1M'
 
 transactions.spine_join_keys:
