@@ -104,8 +104,11 @@ Standalone ETL script — **not a Kedro pipeline**, despite the name. Bridges th
 - Every table exists twice — `v_X` (brand `PE`) and `v_PAC_X` (brand `PAC`). Each ingest function
   pulls both, tags `StationBrand`, and concatenates.
 - **`ingest_promos()` is commented out of `ingestion_general()`** (`ingestion_pipeline.py:730-732`),
-  so `data/01_raw/raw_promos.parquet` is *stale* — it is not refreshed by a run, but the Kedro
-  pipeline still reads it (`create_special_trx_features`). Expected; don't "fix" without asking.
+  because `TMP_PROMOS` is no longer accessible. The promo list is now maintained by hand: the catalog
+  reads `data/01_raw/raw_promos_2026_10.parquet` (old list + packages reviewed in Oct 2026), built with
+  `scripts/build_promos_review.py` (MACDB `t_ServicePackage` → review xlsx) and
+  `scripts/build_promos_parquet.py` (reviewed xlsx → parquet). Promos match on *package names*, not
+  `t_Promotion`. 99/199 and 111/222 oil packages are never promos. The original `raw_promos.parquet` is kept untouched.
 - Most functions coerce every column to `str` before writing. Casting back to numeric happens
   downstream. Don't be surprised by object dtypes in `01_raw`.
 - `ingest_vehicles()` is a huge hand-maintained normalisation table for `Make` / `Model` typos

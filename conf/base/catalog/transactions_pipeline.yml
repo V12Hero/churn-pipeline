@@ -329,7 +329,7 @@ transactions.raw_invoices_items@pandas:
 transactions.raw_promos@pandas:
   type: pandas.ParquetDataset
   # file_format: parquet
-  filepath: data/01_raw/raw_promos.parquet
+  filepath: data/01_raw/raw_promos_2026_10.parquet
   load_args:
     engine: fastparquet
   save_args:
@@ -416,7 +416,7 @@ transactions.raw_branches:
 transactions.raw_promos:
   type: spark.SparkDataset
   file_format: parquet
-  filepath: data/01_raw/raw_promos.parquet
+  filepath: data/01_raw/raw_promos_2026_10.parquet
   save_args:
     mode: overwrite
 #   layer: 01_raw
