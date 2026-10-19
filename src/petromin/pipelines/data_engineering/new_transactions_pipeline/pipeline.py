@@ -103,6 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=create_prm_branches,
                 inputs={
                     "branches_info": "int_branches@spark",
+                    "branch_coordinates": "raw_branch_coordinates",
                 },
                 outputs="prm_branches@spark",
                 name="create_prm_branches",

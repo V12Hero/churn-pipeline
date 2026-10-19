@@ -372,6 +372,15 @@ transactions.raw_branches@pandas:
   # save_args:
 #   layer: 01_raw
 
+# Branch coordinates that override MACDB (built by scripts/build_branch_coordinates.py from the ops Search Engine workbook)
+transactions.raw_branch_coordinates:
+  type: pandas.ExcelDataset
+  filepath: data/01_raw/branch_coordinates.xlsx
+  load_args:
+    sheet_name: coordinates
+    dtype:
+      branch_code: str
+
 transactions.raw_servicing_rules@pandas:
   type: pandas.CSVDataset
   filepath: data/01_raw/Servicing Rules.csv

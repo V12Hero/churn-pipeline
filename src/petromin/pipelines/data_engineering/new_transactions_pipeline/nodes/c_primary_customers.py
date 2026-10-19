@@ -212,6 +212,7 @@ def create_prm_vehicles(
 
 def create_prm_branches(
     branches_info: pyspark.sql.DataFrame,
+    branch_coordinates: pd.DataFrame,
 ) -> pyspark.sql.DataFrame:
     """
     The function `create_prm_branch` removes duplicates from a DataFrame based on specified columns and
@@ -222,6 +223,8 @@ def create_prm_branches(
     containing information about branches. The function `create_prm_branch` drops duplicates from the
     DataFrame based on certain columns and then sorts the resulting DataFrame by the "Customer_id"
     column before returning it.
+      branch_coordinates (pd.DataFrame): `branch_code`, `latitude`, `longitude` per branch, from
+    `data/01_raw/branch_coordinates.xlsx`. Where a branch is in this file its coordinates replace the MACDB ones.
 
     Returns:
       The function `create_prm_branch` is returning the input DataFrame `branches_info` after dropping
@@ -232,6 +235,37 @@ def create_prm_branches(
     # drop duplicates
     branches_cols = set(branches_info.columns) - set(["station_brand"])
     branches_info = branches_info.dropDuplicates(subset=list(branches_cols))
+
+    # MACDB stores (0, 0) for unknown coordinates; make them null so the override / dropna downstream sees them
+    unknown = (f.col("latitude") == 0) & (f.col("longitude") == 0)
+    for col in ["latitude", "longitude"]:
+        branches_info = branches_info.withColumn(col, f.when(unknown, f.lit(None)).otherwise(f.col(col)))
+
+    # Coordinates from the ops Search Engine workbook (scripts/build_branch_coordinates.py) win over MACDB
+    coordinates = spark.createDataFrame(
+        branch_coordinates[["branch_code", "latitude", "longitude"]].astype(
+            {"branch_code": str, "latitude": float, "longitude": float}
+        )
+    ).select(
+        f.trim(f.upper("branch_code")).alias("branch_code"),
+        f.col("latitude").alias("override_latitude"),
+        f.col("longitude").alias("override_longitude"),
+    )
+    branches_info = branches_info.join(f.broadcast(coordinates), on="branch_code", how="left")
+    for col in ["latitude", "longitude"]:
+        branches_info = branches_info.withColumn(
+            col, f.coalesce(f.col(f"override_{col}").cast(branches_info.schema[col].dataType), f.col(col))
+        )
+
+    counts = branches_info.agg(
+        f.count("*").alias("branches"),
+        f.count("override_latitude").alias("from_override"),
+        f.sum(f.when(f.col("latitude").isNull() | f.col("longitude").isNull(), 1).otherwise(0)).alias("no_coordinates"),
+    ).first()
+    logger.info(
+        f"branch coordinates: {counts['branches']} branches, {counts['from_override']} from override file, "
+        f"{counts['no_coordinates']} still without coordinates"
+    )
 
     out = branches_info.select(
         "branch_id",

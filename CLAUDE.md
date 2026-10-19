@@ -243,40 +243,45 @@ expensive.
 
 ---
 
-## 6. Known issue — branch coordinates are NULL (open as of 2026-07-22)
+## 6. Branch coordinates — override file (MACDB returns NULL since 2026-07)
 
-`create_prm_geolocation` fails with:
+`v_Branch` / `v_PAC_Branch` return NULL `Latitude`/`Longitude` for every branch (upstream, not a code
+regression), which used to crash `create_prm_geolocation` with
+`ValueError: Found array with 0 sample(s) (shape=(0, 2))`.
 
+**Fix in place (Oct 2026):** `create_prm_branches` takes a second input,
+`transactions.raw_branch_coordinates` → `data/01_raw/branch_coordinates.xlsx` (sheet `coordinates`), and
+for every `branch_code` in it **the file's lat/lon replace MACDB's**; branches not in the file keep the DB
+value. MACDB `(0, 0)` is treated as null. The node logs
+`branch coordinates: N branches, M from override file, K still without coordinates`.
+
+The file is built from the ops **Search Engine** workbook (`BE#` = `BranchCode`):
+
+```bash
+python scripts/build_branch_coordinates.py "search-engine/10 Search Engine-Oct '26.xlsx"
 ```
-ValueError: Found array with 0 sample(s) (shape=(0, 2)) while a minimum of 1 is required.
-```
 
-**Cause.** `v_Branch` / `v_PAC_Branch` in MACDB now return NULL for `Latitude` and `Longitude` on
-all 1119 branches. `ingest_branches()` str-casts every column, so `raw_branches.parquet` holds the
-literal string `"None"`; the `branches` schema casts to FLOAT → all NaN → the
-`dropna(axis=0, how="any")` at `c_primary_geolocation.py:112` empties the frame → the BallTree at
-line 127 gets a `(0, 2)` array.
+It uses the `PE Stations List` and `Permanent Closed Stations` sheets, parses decimal and DMS
+coordinates, rejects anything not on KSA land (WorldPop KSA 1km grid) plus a hand-checked `REJECT` list,
+and writes a `validation` sheet with flags (far from the Aug-2025 DB value, city outliers, shared points,
+`NEEDS REVIEW`). Re-run it when ops sends a new Search Engine file.
 
-This is **upstream, not a code regression** — the Aug-2025 snapshot `data/01_raw/branches.parquet`
-has real float64 coordinates. The fix belongs with whoever owns MACDB.
+Coverage (Oct 2026): 750 of 754 branches selling in 2026 have coordinates. Missing: PAC 1886/1903 (the
+`PAC` sheet isn't used yet), 1503 (Van Sales, no location), 1289 Al Bukayriyah (Search Engine coordinate
+is wrong — points at Hail).
 
 **Do not "fix" it by deleting the geolocation node.** Its outputs feed the churn model
 (`avg_n_places_within_*`, `avg_pop_density` in `model_churn.yml:18-25`), and `predict_churn` selects
 columns via `model.feature_names_in_`, so removing them just moves the failure to a `KeyError`.
+The old workaround (`--from-nodes "transactions.create_prm_transactions"` + stale `prm_geolocation`) is
+no longer needed — run the full pipeline so `prm_branches` / `prm_geolocation` are rebuilt.
 
-**Workaround in use** — reuse the last good geolocation and skip the node:
-
-```bash
-kedro run --pipeline full_mileage_model --from-nodes "transactions.create_prm_transactions"
-```
-
-`data/03_primary/prm_geolocation` (Jun 24 2026, 170,872 rows, 1104 branch_ids) covers 1104 of
-today's 1119 branches. The 15 newer ones get null geo features, which slightly degrades their churn
-scores. This is a one-month patch and the cache stales further every month.
-
-Related trap: that `dropna(how="any")` has *always* silently discarded branches with missing
-coordinates. It only became a crash when the proportion hit 100%, so partial degradation in earlier
-months went unnoticed.
+Related traps:
+- `dropna(how="any")` at `c_primary_geolocation.py:112` silently discards branches without coordinates.
+- The Aug-2025 DB snapshot (`data/01_raw/branches.parquet`) had `(0, 0)` for ~110 branches, so older
+  geolocation features for those were computed in the Gulf of Guinea.
+- `world_pop` schema maps WorldPop `X` (longitude) → `latitude` and `Y` → `longitude`, so `pop_density`
+  is looked up at the wrong cell. The churn model was trained with this, so only fix it together with a retrain.
 
 ## 7. Gotchas
 
