@@ -9,7 +9,7 @@ Names are stripped of leading/trailing spaces: `columns_formatting` applies trim
 but `create_special_trx_features` only upper()s the promo list, so a promo with a trailing space never matched.
 
 Usage (BTL env, from repo root):
-    python scripts/build_promos_parquet.py data/01_raw/promos/promos_review_4.xlsx data/01_raw/raw_promos_2026_10.parquet
+    python scripts/build_promos_parquet.py data/01_raw/promos/promos_review_5.xlsx data/01_raw/raw_promos_2026_10.parquet
 """
 
 import sys
