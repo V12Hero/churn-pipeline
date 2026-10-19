@@ -804,7 +804,7 @@ def prepare_transactions():
 
 def main():
 
-    min_date = "2026-09-01"
+    min_date = "2026-07-01"
 
     logger.info("Start Ingestion Process")
 
