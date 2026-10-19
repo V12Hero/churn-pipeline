@@ -43,6 +43,8 @@ REJECT = {
     "1289": "points at Hail city; Al Bukayriyah is ~26.14N 43.66E (Aug-2025 DB had 26.13, 43.61)",
     "1527": "copy of 2125 Umrah Land's coordinate (Aug-2025 DB had 21.453, 39.808)",
 }
+# Same physical station with more than one BE# (separate POS), so sharing a coordinate is expected
+SAME_SITE = [{"1168", "1629"}]  # Exit14 Ryd + Exit14Ryd Extension; sales of 1629 are combined into 1168
 # Checked by hand (Oct 2026): plausible but couldn't confirm, kept
 REVIEW = {
     "1879": "'Orange Tahlia Jubail' but the point is in Al Khobar (same in Aug-2025 DB)",
@@ -128,6 +130,8 @@ def validate(df: pd.DataFrame) -> pd.DataFrame:
     )
     shared = df[has].groupby(["latitude", "longitude"])["branch_code"].transform(lambda s: ", ".join(s) if len(s) > 1 else "")
     df["shares_coordinate_with"] = shared.reindex(df.index).fillna("")
+    expected = df["shares_coordinate_with"].apply(lambda x: set(x.split(", ")) in SAME_SITE)
+    df.loc[expected, "shares_coordinate_with"] = ""
 
     df["status"] = np.select(
         [~has, ~df["in_ksa"], df["branch_code"].isin(REJECT.keys())],
