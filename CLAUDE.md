@@ -105,7 +105,9 @@ Standalone ETL script — **not a Kedro pipeline**, despite the name. Bridges th
   pulls both, tags `StationBrand`, and concatenates.
 - **`ingest_promos()` is commented out of `ingestion_general()`** (`ingestion_pipeline.py:730-732`),
   because `TMP_PROMOS` is no longer accessible. The promo list is now maintained by hand: the catalog
-  reads `data/01_raw/raw_promos_2026_10.parquet` (old list + packages reviewed in Oct 2026), built with
+  reads `data/01_raw/raw_promos_2026_11.parquet` (old list + packages reviewed in Oct 2026 + 7 found
+  missing in the Nov 2026 audit: `MEGA OFFER PETROMIN MINERAL` and variants, 69/169 oil packages; review
+  file `promos_review_6.xlsx`). Promo names match `package_name` case- and whitespace-insensitively. Built with
   `scripts/build_promos_review.py` (MACDB `t_ServicePackage` → review xlsx) and
   `scripts/build_promos_parquet.py` (reviewed xlsx → parquet). Promos match on *package names*, not
   `t_Promotion`. 99/199 and 111/222 oil packages are never promos. The original `raw_promos.parquet` is kept untouched.

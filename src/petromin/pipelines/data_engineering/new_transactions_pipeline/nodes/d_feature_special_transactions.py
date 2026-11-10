@@ -11,7 +11,15 @@ def create_special_trx_features(
     prm_promo: pyspark.sql.DataFrame,
 ) -> pyspark.sql.DataFrame:
 
+    # Match on upper-cased names with runs of whitespace (spaces, tabs) collapsed and edges trimmed, on
+    # both sides: package names in MACDB carry stray double spaces / tabs, so an exact match missed
+    # e.g. "AC Gold Package SUV" and "Free Oil Filter Change (Platinum Loyalty)".
     promo_list = prm_promo.select("Promo").distinct().rdd.map(lambda r: r[0]).collect()
+    promo_list = sorted({" ".join(str(p).split()).upper() for p in promo_list if p is not None})
+    base_sales = base_sales.withColumn(
+        "_package_name_norm",
+        f.upper(f.trim(f.regexp_replace(f.col("package_name"), r"\s+", " "))),
+    )
 
     ftr_pms_monthly_trx = base_sales.filter(
         f.col("is_pms") == f.lit(1)
@@ -25,7 +33,7 @@ def create_special_trx_features(
     ftr_promo_monthly_trx = base_sales.withColumn(
         "has_promo",
         f.when(
-            f.upper("package_name").isin(*[promo.upper() for promo in promo_list]),
+            f.col("_package_name_norm").isin(*promo_list),
             f.lit(1)
         ).otherwise(f.lit(0))
     ).groupBy(
@@ -45,7 +53,7 @@ def create_special_trx_features(
     ftr_promos_monthly_trx = base_sales.withColumn(
         "has_promo",
         f.when(
-            f.upper("package_name").isin(*[promo.upper() for promo in promo_list]),
+            f.col("_package_name_norm").isin(*promo_list),
             f.lit(1)
         ).otherwise(f.lit(0))
     ).filter(
