@@ -5,6 +5,8 @@ Not part of the Kedro pipeline; run it after `kedro run --pipeline full_mileage_
 
     python post-processing/final/btl_targetlist_create.py
     python post-processing/final/btl_targetlist_create.py --as-of 2026-11-10
+    python post-processing/final/btl_targetlist_create.py --recompute-price-segment
+    python post-processing/final/btl_targetlist_create.py --search-engine "search-engine/11 Search Engine-Nov '26.xlsx"
 
 Steps
   1. Keep active customers: loyalty_segment not Lost/Gone, last transaction within 365 days of --as-of.
@@ -16,6 +18,27 @@ Steps
      Cars with none of these are dropped.
   3. One row per mobile: best product across the customer's cars; ties go to the car with the
      latest transaction.
+  4. Closed stations: `last_branch_code` = branch of the customer's last visit (data/04_feature/
+     ftr_branches at the forecast's _observ_end_dt); `is_station_closed` = 1 when that branch is in
+     the ops Search Engine's "Permanent Closed Stations" sheet (incl. "Convert to PAC/NOS") and not
+     back in "PE Stations List" (e.g. 1118 "Open Again"); `station_closing_date` from the same sheet.
+     Uses the newest search-engine/*Search Engine-<Mon> '<yy>.xlsx (or --search-engine). This
+     replaces the forecast's is_station_closed, which comes from mileage.closed_station_list (empty).
+
+--recompute-price-segment
+  Recomputes `price_segment` for the listed cars from data/03_primary/prm_transactions over the 12
+  monthly snapshots ending at the forecast's _observ_end_dt (same window as the pipeline's
+  d_feature_customer_transactions.create_segment_features). --price-rule picks what counts:
+    pipeline           promo visit = a package on the promo list (catalog's raw_promos or --promos);
+                       reproduces the Kedro rule: no promo visit -> Full price, all visits promo ->
+                       Promo hunter, else Mixed price. `--promos <list the Kedro run used>` must
+                       reproduce the forecast exactly.
+    offers             promo visit also = a package named *OFFER* / *PROMO* or a 99/199/111/222
+                       fixed-price oil package (partner deals, SAR 99 ...). Same three segments.
+    offers+discount    (default) as `offers`, and Full price also needs no discount on any visit
+                       (discount_amount > 0); a customer with discounted but no promo visits is Mixed.
+  For the BTL tag only (user, 2026-11-10): the Kedro promo list and churn features keep the
+  pipeline rule. Names match case/whitespace-insensitively.
 
 Differences vs the notebook (intentional)
   - The 365-day cutoff is anchored to --as-of (default: today) so a rerun is reproducible.
@@ -31,19 +54,28 @@ Differences vs the notebook (intentional)
 from __future__ import annotations
 
 import argparse
+import re
 import logging
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pyarrow.compute as pc
+import pyarrow.dataset as ds
 import pyarrow.parquet as pq
+import yaml
 
 from btl_paths import REPO, month_dir
 
 log = logging.getLogger("btl_targetlist_create")
 
 DEFAULT_INPUT = REPO / "data/06_models/mileage/mileage_forecast.parquet"
+PRM_TRANSACTIONS = REPO / "data/03_primary/prm_transactions"
+TRANSACTIONS_CATALOG = REPO / "conf/base/catalog/transactions_pipeline.yml"
+FTR_BRANCHES = REPO / "data/04_feature/ftr_branches"
+SEARCH_ENGINE_DIR = REPO / "search-engine"
+PRICE_WINDOW_MONTHS = 12  # rowsBetween(-11, 0) over monthly snapshots in create_segment_features
 
 RECENCY_DAYS = 365
 EXCLUDED_SEGMENTS = ["Lost", "Gone"]
@@ -99,7 +131,9 @@ OUTPUT_COLUMNS = [
     "loyalty_segment",
     "price_segment",
     "decile",
+    "last_branch_code",
     "is_station_closed",
+    "station_closing_date",
     "churn_probability",
     "churn_bucket",
     "Product",
@@ -181,6 +215,121 @@ def one_row_per_mobile(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def catalog_promos_path() -> Path:
+    catalog = yaml.safe_load(TRANSACTIONS_CATALOG.read_text())
+    return REPO / catalog["transactions.raw_promos"]["filepath"]
+
+
+def _norm_names(s: pd.Series) -> pd.Series:
+    return s.astype("string").str.replace(r"\s+", " ", regex=True).str.strip().str.upper()
+
+
+# Package names that count as a promo visit under --price-rule offers / offers+discount, on top of
+# the promo list. The number must stand alone so model codes like "HILUX TGN111&121" don't match.
+OFFER_NAME_PATTERN = r"OFFER|PROMO|(?<![A-Z0-9])(?:99|199|111|222)(?![0-9])"
+PRICE_RULES = ["pipeline", "offers", "offers+discount"]
+
+
+def recompute_price_segment(
+    df: pd.DataFrame, target_month: str, promos_path: Path, rule: str = "offers+discount"
+) -> pd.DataFrame:
+    observ_end = pd.Timestamp(f"1 {target_month}") + pd.offsets.MonthEnd(0)
+    window_start = (observ_end - pd.offsets.MonthEnd(PRICE_WINDOW_MONTHS - 1)).date()
+    promos = set(_norm_names(pd.read_parquet(promos_path)["Promo"]).dropna())
+
+    flt = (
+        pc.field("_id").isin(df["_id"].unique().tolist())
+        & (pc.field("_observ_end_dt") >= window_start)
+        & (pc.field("_observ_end_dt") <= observ_end.date())
+        & pc.field("transaction_id").is_valid()
+    )
+    tx = ds.dataset(PRM_TRANSACTIONS, format="parquet").to_table(
+        filter=flt, columns=["_id", "transaction_id", "package_name", "discount_amount"]
+    ).to_pandas()
+    names = _norm_names(tx["package_name"])
+    tx["is_promo"] = names.isin(promos).to_numpy()
+    if rule != "pipeline":
+        by_name = names.str.contains(OFFER_NAME_PATTERN, regex=True).fillna(False).to_numpy() & ~tx["is_promo"]
+        log.info(
+            "price rule %s: %s more promo lines by name, top:\n%s",
+            rule, f"{by_name.sum():,}", names[by_name].value_counts().head(15).to_string(),
+        )
+        tx["is_promo"] |= by_name
+    visits = tx.groupby("_id")["transaction_id"].nunique()
+    promo_visits = tx.loc[tx["is_promo"]].groupby("_id")["transaction_id"].nunique()
+    disc_visits = tx.loc[tx["discount_amount"].astype(float) > 0].groupby("_id")["transaction_id"].nunique()
+
+    v = df["_id"].map(visits).fillna(0).to_numpy()
+    pv = df["_id"].map(promo_visits).fillna(0).to_numpy()
+    full = (v > 0) & (pv == 0)
+    if rule == "offers+discount":
+        full &= df["_id"].map(disc_visits).fillna(0).to_numpy() == 0
+    new = np.select([full, (v > 0) & (pv == v)], ["Full price", "Promo hunter"], default="Mixed price")
+
+    old = df["price_segment"].astype("string").fillna("<NA>").to_numpy()
+    changes = pd.crosstab(pd.Series(old, name="forecast"), pd.Series(new, name="recomputed"))
+    log.info(
+        "price_segment recomputed (rule %s) with %s (%s promo names, snapshots %s..%s): %s of %s rows changed\n%s",
+        rule, promos_path.name, len(promos), window_start, observ_end.date(),
+        f"{(old != new).sum():,}", f"{len(df):,}", changes.to_string(),
+    )
+    df["price_segment"] = new
+    return df
+
+
+def latest_search_engine() -> Path:
+    """Newest search-engine/*.xlsx by the "<Mon> '<yy>" in its name, e.g. "11 Search Engine-Nov '26.xlsx"."""
+    dated = []
+    for path in SEARCH_ENGINE_DIR.glob("*.xlsx"):
+        m = re.search(r"([A-Za-z]{3})[a-z]* '(\d{2})", path.stem)
+        if m and not path.name.startswith("~$"):
+            dated.append((pd.to_datetime(f"1 {m[1]} 20{m[2]}", format="%d %b %Y"), path))
+    if not dated:
+        raise FileNotFoundError(f"no \"... Search Engine-<Mon> '<yy>.xlsx\" in {SEARCH_ENGINE_DIR}")
+    return max(dated)[1]
+
+
+def _branch_codes(s: pd.Series) -> pd.Series:
+    return pd.to_numeric(s, errors="coerce").astype("Int64").astype("string")
+
+
+def load_closed_stations(path: Path) -> pd.Series:
+    """branch_code -> closing date for stations closed per the Search Engine workbook."""
+    closed = pd.read_excel(path, sheet_name="Permanent Closed Stations", header=0)
+    # The sheet has a summary block under the station rows; real rows have a 4-digit BE#.
+    closed["branch_code"] = _branch_codes(closed["BE#"])
+    closed = closed[closed["branch_code"].str.len().eq(4).fillna(False)]
+    operational = set(_branch_codes(pd.read_excel(path, sheet_name="PE Stations List", header=1)["BE#"]).dropna())
+    reopened = closed["branch_code"].isin(operational)
+    closed = closed[~reopened]
+    closed["closing_date"] = pd.to_datetime(closed["Closing Date"], errors="coerce").dt.date
+    out = closed.sort_values("closing_date").drop_duplicates("branch_code", keep="last")
+    log.info(
+        "closed stations from %s: %s (%s back in PE Stations List ignored; status %s)",
+        path.name, len(out), int(reopened.sum()), out["Current Status"].value_counts().to_dict(),
+    )
+    return out.set_index("branch_code")["closing_date"]
+
+
+def flag_closed_station(df: pd.DataFrame, observ_end: pd.Timestamp, search_engine: Path) -> pd.DataFrame:
+    flt = pc.field("_observ_end_dt") == observ_end.date()
+    branches = ds.dataset(FTR_BRANCHES, format="parquet").to_table(
+        filter=flt & pc.field("_id").isin(df["_id"].unique().tolist()), columns=["_id", "branch_code"]
+    ).to_pandas()
+    df["last_branch_code"] = df["_id"].map(branches.drop_duplicates("_id").set_index("_id")["branch_code"])
+    df["last_branch_code"] = _branch_codes(df["last_branch_code"])
+
+    closing = load_closed_stations(search_engine)
+    df["station_closing_date"] = df["last_branch_code"].map(closing)
+    df["is_station_closed"] = df["last_branch_code"].isin(closing.index).astype("int8")
+    log.info(
+        "last station closed: %s of %s rows (%s without a last branch)\n%s",
+        f"{df['is_station_closed'].sum():,}", f"{len(df):,}", f"{df['last_branch_code'].isna().sum():,}",
+        df.loc[df["is_station_closed"] == 1, "last_branch_code"].value_counts().head(15).to_string(),
+    )
+    return df
+
+
 def finalize(df: pd.DataFrame, target_month: str) -> pd.DataFrame:
     df["mobile"] = df["mobile"].astype(str)
     df["PlateNumber"] = df["_id"].str.split("__").str[0]
@@ -219,6 +368,27 @@ def main() -> None:
         "--month",
         help="Target_Month_Wave label, e.g. 'Nov 2026' (default: from the forecast's _observ_end_dt).",
     )
+    parser.add_argument(
+        "--recompute-price-segment",
+        action="store_true",
+        help="Recompute price_segment from prm_transactions with the current promo list.",
+    )
+    parser.add_argument(
+        "--promos",
+        type=Path,
+        help="Promo list for --recompute-price-segment (default: the catalog's transactions.raw_promos).",
+    )
+    parser.add_argument(
+        "--search-engine",
+        type=Path,
+        help="Ops Search Engine workbook for closed stations (default: newest in search-engine/).",
+    )
+    parser.add_argument(
+        "--price-rule",
+        choices=PRICE_RULES,
+        default="offers+discount",
+        help="What breaks Full price under --recompute-price-segment (see module docstring).",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -229,6 +399,10 @@ def main() -> None:
     df = filter_active(df, args.as_of)
     df = assign_product(df)
     df = one_row_per_mobile(df)
+    if args.recompute_price_segment:
+        df = recompute_price_segment(df, target_month, args.promos or catalog_promos_path(), args.price_rule)
+    observ_end = pd.Timestamp(f"1 {target_month}") + pd.offsets.MonthEnd(0)
+    df = flag_closed_station(df, observ_end, args.search_engine or latest_search_engine())
     df = finalize(df, target_month)
     log_summary(df)
 

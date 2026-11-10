@@ -11,7 +11,12 @@ Then a row is dropped if its mobile OR its PlateNumber appears in any of:
   1. Recent sales  — MACDB invoices since --sales-since (default: the day after the latest
                      customer_last_transaction_dt in the list, i.e. every visit the model didn't see).
   2. No consent    — v_Customer.ConsentStatus = 0 (mobile only).
-  3. --exclude     — lists already sent to marketing. CSV or XLSX; for XLSX append
+  3. NTSC fleet    — mobiles/plates on fleet invoices since the list's earliest last transaction.
+                     An invoice is fleet when EVERY work order on it carries a contract tagged
+                     Ownership = NTSC in the newest post-processing/ntsc-mapping/Mapping_Final_*.xlsx
+                     (by the date in the name; --ntsc-mapping to override). Same rule as
+                     taif_project/pe-analysis/mega_pe_lists.py; IsFleet is not used (it disagrees).
+  4. --exclude     — lists already sent to marketing. CSV or XLSX; for XLSX append
                      `#Sheet1,Sheet2` to read only those sheets (default: every sheet).
                      Mobiles come from any `mobile` / `mapped_mobile` column (any case) or, failing
                      that, from `_id` ("<mobile>_<plate>"); plates from `PlateNumber`.
@@ -32,12 +37,13 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-from datetime import date
+import re
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import bindparam, create_engine, text
 from sqlalchemy.engine import URL
 
 from btl_paths import EXCLUSION_LOG, REPO, resolve_month_dir
@@ -56,6 +62,26 @@ RECENT_SALES_SQL = """
     WHERE s.InvoiceDate >= :since
 """
 NO_CONSENT_SQL = "SELECT DISTINCT Mobile FROM dbo.v_Customer WHERE ConsentStatus = 0"
+
+NTSC_MAPPING_DIR = REPO / "post-processing/ntsc-mapping"
+# Customers on invoices whose work orders ALL carry an NTSC contract.
+NTSC_FLEET_SQL = """
+    WITH fleet AS (
+        SELECT iwo.InvoiceID
+        FROM dbo.t_Invoice AS i
+            JOIN dbo.t_InvoiceWorkOrder AS iwo ON iwo.InvoiceID = i.InvoiceID
+            JOIN dbo.t_WorkOrder AS w ON w.WorkOrderID = iwo.WorkOrderID
+            LEFT JOIN dbo.t_CustomerContract AS ct ON ct.CustomerContractID = w.CustomerContractID
+        WHERE i.InvoiceDate >= :since
+        GROUP BY iwo.InvoiceID
+        HAVING MIN(CASE WHEN LTRIM(RTRIM(ct.CustomerContractNumber)) IN :contracts THEN 1 ELSE 0 END) = 1
+    )
+    SELECT DISTINCT c.Mobile, v.PlateNumber
+    FROM dbo.MAC_Master_Sales_Pet AS s
+        JOIN fleet AS f ON f.InvoiceID = s.InvoiceID
+        LEFT JOIN dbo.v_Customer AS c ON s.CustomerID = c.CustomerID
+        LEFT JOIN dbo.MAC_Vehicle AS v ON s.CustomerVehicleID = v.CustomerVehicleID
+"""
 
 
 # ---------------------------------------------------------------- normalisation
@@ -92,6 +118,30 @@ def recent_sales(engine, since: date) -> tuple[set, set]:
 def no_consent(engine) -> set:
     df = pd.read_sql_query(text(NO_CONSENT_SQL), engine)
     return set(normalize_mobile(df["Mobile"]).dropna())
+
+
+def newest_ntsc_mapping() -> Path:
+    def stamp(p: Path) -> datetime:
+        m = re.search(r"(\d{2}[A-Za-z]{3}\d{2})$", p.stem)
+        return datetime.strptime(m.group(1), "%d%b%y") if m else datetime.min
+    files = [p for p in NTSC_MAPPING_DIR.glob("Mapping_Final_*.xlsx") if not p.name.startswith("~$")]
+    if not files:
+        raise FileNotFoundError(f"no Mapping_Final_*.xlsx in {NTSC_MAPPING_DIR}")
+    return max(files, key=stamp)
+
+
+def ntsc_contracts(path: Path) -> list[str]:
+    m = pd.read_excel(path, dtype=str)
+    contracts = m.loc[m["Ownership"].str.strip().str.upper() == "NTSC", "Contract No."]
+    contracts = sorted(contracts.dropna().str.strip().loc[lambda s: s != ""].unique())
+    log.info("NTSC contracts in %s: %s", path.name, len(contracts))
+    return contracts
+
+
+def ntsc_fleet(engine, contracts: list[str], since: date) -> tuple[set, set]:
+    sql = text(NTSC_FLEET_SQL).bindparams(bindparam("contracts", expanding=True))
+    df = pd.read_sql_query(sql, engine, params={"since": since.isoformat(), "contracts": contracts})
+    return set(normalize_mobile(df["Mobile"]).dropna()), set(normalize_plate(df["PlateNumber"]).dropna())
 
 
 def read_list(spec: str) -> tuple[set, set]:
@@ -149,6 +199,8 @@ def main() -> None:
     parser.add_argument("--sales-since", type=date.fromisoformat,
                         help="Drop customers with an invoice on/after this date "
                              "(default: day after the list's latest customer_last_transaction_dt).")
+    parser.add_argument("--ntsc-mapping", type=Path,
+                        help="NTSC contract workbook (default: newest Mapping_Final_*.xlsx in post-processing/ntsc-mapping).")
     parser.add_argument("--wave", default="1")
     parser.add_argument("--output-dir", type=Path, help="Default: the month folder.")
     args = parser.parse_args()
@@ -161,9 +213,11 @@ def main() -> None:
     df["_plate_norm"] = normalize_plate(df["PlateNumber"])
     log.info("loaded %s: %s rows", in_path, f"{len(df):,}")
 
-    sales_since = args.sales_since or (
-        pd.to_datetime(df["customer_last_transaction_dt"]).max().date() + pd.Timedelta(days=1)
-    )
+    last_trx = pd.to_datetime(df["customer_last_transaction_dt"])
+    sales_since = args.sales_since or (last_trx.max().date() + pd.Timedelta(days=1))
+    fleet_since = last_trx.min().date()
+    ntsc_path = (args.ntsc_mapping or newest_ntsc_mapping()).resolve()
+    contracts = ntsc_contracts(ntsc_path)
     report: list = []
     df = drop(df, "invalid mobile", set(), set(), report, extra=df["_mobile_norm"].isna())
 
@@ -179,6 +233,9 @@ def main() -> None:
     log.info("querying MACDB: sales since %s, no-consent customers", sales_since)
     df = drop(df, f"recent sales (since {sales_since})", *recent_sales(engine, sales_since), report)
     df = drop(df, "no consent (ConsentStatus = 0)", no_consent(engine), set(), report)
+    log.info("querying MACDB: NTSC fleet invoices since %s", fleet_since)
+    df = drop(df, f"NTSC fleet (since {fleet_since})", *ntsc_fleet(engine, contracts, fleet_since), report,
+              str(ntsc_path), f"{len(contracts)} contracts")
     for path, sheets, mobiles, plates in lists:
         df = drop(df, path.name, mobiles, plates, report, str(path), sheets)
 
