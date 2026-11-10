@@ -141,3 +141,7 @@ data/**/outputs/
 .env.*
 *.xlsx
 *.csv
+
+# BTL post-processing: outputs hold customer mobiles; rough notebooks are scratch — never commit
+post-processing/final/outputs/
+post-processing/rough/
