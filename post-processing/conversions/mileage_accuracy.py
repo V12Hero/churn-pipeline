@@ -42,6 +42,11 @@ from btl_results_dashboard import load_list, norm_mobile, norm_plate  # noqa: E4
 FTR_MILEAGE = REPO / "data/04_feature/ftr_mileage"
 OUTPUTS = HERE / "outputs"
 
+DEFAULT_KM_PER_DAY = 55   # the model's fallback rate when a car has no usable km/day history
+KM_BANDS = [-np.inf, 2500, 5000, 7500, 10000, 15000, np.inf]
+KM_BAND_LABELS = ["< 2.5k", "2.5k-5k", "5k-7.5k", "7.5k-10k", "10k-15k", "15k+"]
+PRODUCT_ORDER = ["Due PMS", "Due Oil", "Due Oil + Non Oil", "Due Non Oil"]
+VISIT_ORDER = ["PMS", "Oil", "Non Oil only"]
 MAX_KM_PER_DAY = 700   # same cap the mileage model applies to customer_mileage_per_day
 BANDS = [-np.inf, -10000, -5000, -2500, -1000, 1000, 2500, 5000, 10000, np.inf]
 BAND_LABELS = ["< -10k (came much lower)", "-10k to -5k", "-5k to -2.5k", "-2.5k to -1k", "within ±1k",
@@ -63,6 +68,8 @@ def fetch_invoices(start: str, end_inclusive: str) -> pd.DataFrame:
         SELECT s.InvoiceNumber,
                MIN(s.InvoiceDate)       AS InvoiceDate,
                MAX(s.WorkOrderMileage)  AS actual_mileage,
+               MAX(CASE WHEN s.ItemCategory = 'Oil' THEN 1 ELSE 0 END) AS has_oil,
+               MAX(CASE WHEN s.IsPMS = 1 THEN 1 ELSE 0 END)            AS is_pms,
                SUM(s.InvoiceBeforeVAT)  AS revenue,
                MAX(c.Mobile)            AS Mobile,
                MAX(v.PlateNumber)       AS PlateNumber
@@ -81,6 +88,7 @@ def fetch_invoices(start: str, end_inclusive: str) -> pd.DataFrame:
     inv["actual_mileage"] = pd.to_numeric(inv["actual_mileage"], errors="coerce")
     inv["mobile_key"] = norm_mobile(inv["Mobile"])
     inv["plate_key"] = norm_plate(inv["PlateNumber"])
+    inv["actual_visit"] = np.select([inv["is_pms"] == 1, inv["has_oil"] == 1], ["PMS", "Oil"], "Non Oil only")
     return inv
 
 
@@ -124,6 +132,10 @@ def compare(fv: pd.DataFrame, pred: pd.DataFrame) -> pd.DataFrame:
     df["abs_error_pct"] = df["error_pct"].abs()
     df["error_vs_month_end_km"] = df["actual_mileage"] - df["predicted_month_end"]
     df["actual_km_per_day"] = ((df["actual_mileage"] - df["customer_last_current_mileage"]) / days).round(1)
+    df["predicted_km_since_last"] = df["predicted_at_visit"] - df["customer_last_current_mileage"]
+    df["actual_km_since_last"] = df["actual_mileage"] - df["customer_last_current_mileage"]
+    df["rate_source"] = np.where(df["customer_avg_mileage_per_day"] == DEFAULT_KM_PER_DAY,
+                                 f"default {DEFAULT_KM_PER_DAY} km/day (no usable history)", "car's own history")
 
     status = np.select(
         [df["predicted_at_visit"].isna(),
@@ -170,7 +182,8 @@ def build_tables(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     seg_frames = []
     for col, title in [("campaign_group", "Campaign group"), ("loyalty_segment", "Loyalty segment"),
                        ("price_segment", "Price segment"), ("churn_bucket", "Churn bucket"),
-                       ("Product", "Product"), ("match_type", "Match type")]:
+                       ("Product", "Product"), ("match_type", "Match type"),
+                       ("rate_source", "Predicted km/day source")]:
         t = df.groupby(col, dropna=False).apply(stats, include_groups=False).reset_index()
         t.insert(0, "dimension", title)
         seg_frames.append(t.rename(columns={col: "segment"}))
@@ -191,14 +204,47 @@ def build_tables(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     bands["share"] = bands["cars"] / bands["cars"].sum()
     for grp in ["TEST", "CONTROL"]:
         bands[grp] = ok.loc[ok["campaign_group"] == grp, "error_band"].value_counts().reindex(BAND_LABELS, fill_value=0).values
-    return {"overall": overall, "status": status, "by_segment": by_seg, "bands": bands}
+    return {"overall": overall, "status": status, "by_segment": by_seg, "bands": bands, **confusion(df)}
+
+
+def confusion(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    # 1) what the list said the car was due for  vs  what it came for (all converted cars)
+    prod = pd.crosstab(df["Product"], df["actual_visit"]).reindex(index=PRODUCT_ORDER, columns=VISIT_ORDER, fill_value=0)
+    prod.index.name = "Predicted (list Product)"
+
+    # 2) oil due (Due PMS / Due Oil / Due Oil + Non Oil) vs oil actually on the invoice
+    pred_oil = np.where(df["Product"].eq("Due Non Oil"), "Predicted: NOT due for oil", "Predicted: due for oil")
+    act_oil = np.where(df["has_oil"] == 1, "Actual: bought oil", "Actual: no oil")
+    oil = pd.crosstab(pred_oil, act_oil).reindex(index=["Predicted: due for oil", "Predicted: NOT due for oil"],
+                                                 columns=["Actual: bought oil", "Actual: no oil"], fill_value=0)
+    oil.index.name = "Predicted"
+    tp, fp = oil.iloc[0, 0], oil.iloc[0, 1]
+    fn, tn = oil.iloc[1, 0], oil.iloc[1, 1]
+    oil_metrics = pd.DataFrame({"metric": [
+        "Precision: of cars predicted due for oil, share that bought oil",
+        "Recall: of cars that bought oil, share predicted due for oil",
+        "Accuracy: share of cars where prediction and purchase agree",
+        "Of cars predicted NOT due for oil, share that bought oil anyway"],
+        "value": [tp / (tp + fp), tp / (tp + fn), (tp + tn) / (tp + fp + fn + tn), fn / (fn + tn)]})
+
+    # 3) km driven since last visit: predicted band vs actual band (clean odometers only)
+    ok = df[df["status"] == "ok"]
+    km = pd.crosstab(pd.cut(ok["predicted_km_since_last"], KM_BANDS, labels=KM_BAND_LABELS, right=False),
+                     pd.cut(ok["actual_km_since_last"], KM_BANDS, labels=KM_BAND_LABELS, right=False),
+                     dropna=False).reindex(index=KM_BAND_LABELS, columns=KM_BAND_LABELS, fill_value=0)
+    km.index.name = "Predicted km since last visit"
+    diag = np.trace(km.values)
+    near = sum(km.values[i, j] for i in range(len(km)) for j in range(len(km)) if abs(i - j) <= 1)
+    km_metrics = pd.DataFrame({"metric": ["Exact band (diagonal)", "Exact or neighbouring band"],
+                               "value": [diag / km.values.sum(), near / km.values.sum()]})
+    return {"cm_product": prod, "cm_oil": oil, "cm_oil_metrics": oil_metrics, "cm_km": km, "cm_km_metrics": km_metrics}
 
 
 # ---------------------------------------------------------------- excel
 DETAIL_COLS = {
     "PlateNumber": "Plate", "mobile": "Listed mobile", "Mobile": "Invoice mobile", "match_type": "Match type",
     "campaign_group": "Group", "loyalty_segment": "Loyalty", "price_segment": "Price segment",
-    "churn_bucket": "Churn bucket", "Product": "Product", "maker": "Make", "model": "Model", "car_age": "Car age",
+    "churn_bucket": "Churn bucket", "Product": "Product", "actual_visit": "Came for", "maker": "Make", "model": "Model", "car_age": "Car age",
     "InvoiceNumber": "First invoice", "InvoiceDate": "Visit date", "visits_in_window": "Visits in window",
     "model_last_visit_dt": "Last visit (model)", "days_since_model_last_visit": "Days since last visit",
     "customer_last_current_mileage": "Last odometer (model)", "customer_avg_mileage_per_day": "Predicted km/day",
@@ -283,6 +329,47 @@ def write_excel(path: Path, df: pd.DataFrame, tabs: dict, meta: dict) -> None:
             ws.write(0, j, c, h)
         ws.set_column(0, 0, 30); ws.set_column(1, 1, 10, km); ws.set_column(2, 2, 10, pct); ws.set_column(3, 4, 10, km)
         ws.conditional_format(1, 2, len(b), 2, {"type": "data_bar", "bar_color": "#5B9BD5"})
+
+        # Confusion matrix
+        ws = wb.add_worksheet("Confusion matrix")
+        xw.sheets["Confusion matrix"] = ws
+        ws.set_column(0, 0, 62); ws.set_column(1, 8, 15)
+        note = wb.add_format({"italic": True, "font_color": "#595959", "text_wrap": True, "valign": "top"})
+
+        def matrix(r, heading, explain, m, metrics=None):
+            ws.write(r, 0, heading, title); ws.merge_range(r + 1, 0, r + 1, 8, explain, note); ws.set_row(r + 1, 45)
+            r += 3
+            for block, fmt, label in [(m, km, "Cars"), (m.div(m.sum(axis=1).replace(0, np.nan), axis=0), pct, "Row % (each predicted row = 100%)")]:
+                ws.write(r, 0, f"{m.index.name or 'Predicted'}  |  {label}", h)
+                for j, c in enumerate(block.columns, start=1):
+                    ws.write(r, j, f"Actual: {c}" if not str(c).startswith("Actual") else c, h)
+                ws.write(r, len(block.columns) + 1, "Total", h)
+                for i, (idx, row) in enumerate(block.iterrows(), start=1):
+                    ws.write(r + i, 0, idx, bold)
+                    for j, v in enumerate(row, start=1):
+                        ws.write(r + i, j, 0 if pd.isna(v) else v, fmt)
+                    ws.write(r + i, len(row) + 1, m.loc[idx].sum(), km)
+                if fmt is pct:
+                    ws.conditional_format(r + 1, 1, r + len(block), len(block.columns),
+                                          {"type": "2_color_scale", "min_color": "#FFFFFF", "max_color": "#5B9BD5"})
+                r += len(block) + 2
+            if metrics is not None:
+                for i, (mname, val) in enumerate(metrics.itertuples(index=False)):
+                    ws.write(r + i, 0, mname, bold); ws.write(r + i, 1, val, pct)
+                r += len(metrics) + 1
+            return r + 1
+
+        r = matrix(0, "1. Predicted product vs what the car came for",
+                   "Rows = what the list said the car was due for. Columns = its first visit: PMS (IsPMS invoice), "
+                   "Oil (an oil item on the invoice), or Non Oil only. Converted cars only: cars that did not come "
+                   "are not here, so this cannot say how many 'due' cars stayed away.", tabs["cm_product"])
+        r = matrix(r, "2. Oil due vs oil bought",
+                   "'Due for oil' = Due PMS, Due Oil or Due Oil + Non Oil. Oil is on about 9 in 10 of ALL invoices, "
+                   "so high precision is easy; the telling number is the last one: cars the model said were NOT due "
+                   "for oil that bought oil anyway.", tabs["cm_oil"], tabs["cm_oil_metrics"])
+        matrix(r, "3. Km driven since last visit: predicted band vs actual band",
+               "Clean odometer readings only. The diagonal is where the predicted distance band was right; cells to "
+               "the left of it = the car drove LESS than predicted, to the right = MORE.", tabs["cm_km"], tabs["cm_km_metrics"])
 
         # Detail
         d = df[[c for c in DETAIL_COLS if c in df.columns]].rename(columns=DETAIL_COLS)
