@@ -114,8 +114,9 @@ Standalone ETL script — **not a Kedro pipeline**, despite the name. Bridges th
 - Most functions coerce every column to `str` before writing. Casting back to numeric happens
   downstream. Don't be surprised by object dtypes in `01_raw`.
 - `ingest_vehicles()` is a huge hand-maintained normalisation table for `Make` / `Model` typos
-  (cashier free-text), plus the `vehicle_brand_level` price tiering. New misspellings get appended
-  to those `.str.replace` chains.
+  (cashier free-text), plus the `vehicle_brand_level` price tiering. New misspellings go into the
+  `_MAKE_TYPOS` / `MODEL_FIXES` dicts above the function (exact match, added Nov 2026), not the `.str.replace`
+  chains. Models also lose bracketed engine/chassis codes and repeated spaces. Takes effect at the next ingestion.
 
 ---
 

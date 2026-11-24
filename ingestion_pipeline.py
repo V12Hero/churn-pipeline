@@ -225,6 +225,159 @@ def ingest_customers():
     return out
 
 
+# Make typos seen in MACDB (Nov 2026 audit of 7.8M vehicles). Exact match after the replace chain in
+# ingest_vehicles(); add new misspellings under the right brand.
+_MAKE_TYPOS = {
+    "baic": [
+        "baic d50", "baic x35",
+    ],
+    "bestune": [
+        "benteng", "besturn",
+    ],
+    "cadillac": [
+        "cadilac",
+    ],
+    "changan": [
+        "chagan", "changa", "changgan", "changhan", "shangan",
+    ],
+    "chery": [
+        "cheery", "chery tiggo",
+    ],
+    "chevrolet": [
+        "chebrolet", "cherolet", "chervolet", "chevolet", "chevrolate", "chevrole", "chevroleit",
+        "chevrolet grove", "chevrolet tahoe", "chevrolete", "chevrolett", "chevrolette", "chevroley",
+        "chevrolit", "chevrolite", "chevrollet", "chevrollete", "chevy",
+    ],
+    "chrysler": [
+        "crysler",
+    ],
+    "daihatsu": [
+        "dahaitsu", "dahatsu", "dai hatsu", "daihasu", "daihatshu", "daihatso", "daihatsun", "daihitsu",
+        "daihtsu", "daihutsu", "daithatsu", "daitshu", "daitsu", "dhaihatsu", "dhiatsu", "diahatsu",
+        "diatshu", "diatsu", "dihatso", "dihatzu", "dihutsu",
+    ],
+    "dodge": [
+        "dodge charger", "dodges", "dogde", "doge", "dogge", "doodge", "dudge",
+    ],
+    "ford": [
+        "ford explorer",
+    ],
+    "geely": [
+        "emgrand geely", "geeely", "geel", "geeley", "geelly", "geely emgrand", "geely motors", "gely",
+        "gleely", "gleey", "greely", "jeely",
+    ],
+    "genesis": [
+        "geneses", "genisis",
+    ],
+    "gmc": [
+        "gm",
+    ],
+    "gwm": [
+        "wingle",
+    ],
+    "haval": [
+        "15 haval", "h6 haval", "h9 haval", "h9haval", "haval h2", "haval h6",
+    ],
+    "honda": [
+        "handa", "honda 1",
+    ],
+    "hummer": [
+        "hammer",
+    ],
+    "hyundai": [
+        "hayundai", "huyndai", "hyndai", "hyuandai", "hyuidai", "hyuindai", "hyumdai", "hyunadi", "hyunda",
+        "hyundae", "hyunday", "hyundi", "nyundai", "yhyundai",
+    ],
+    "infiniti": [
+        "ifiniti nissan", "infiniti  nissan", "infiniti / nissan", "infiniti nissan", "infiniti/nissan",
+        "infinitinissan", "infinity", "infinity/nissan", "infinti", "infinti nissan", "inifiniti nissan",
+        "nissan infiniti", "nissan infinity", "nissan/infiniti", "nissan/infinity", "nissaninfiniti",
+    ],
+    "isuzu": [
+        "1suzu", "asuzu", "isizu", "isusu", "isuz", "isuza", "isuzo", "isuzu d max", "isuzu d max 25td",
+        "isuzu dmax", "iszu",
+    ],
+    "jac": [
+        "jack",
+    ],
+    "jetour": [
+        "15jetour", "jetour x70", "jetour x70 240t",
+    ],
+    "land rover": [
+        "landrover",
+    ],
+    "lexus": [
+        "lexus lx570", "lexus sport", "lexux", "lexuz", "lixus", "luxus",
+    ],
+    "lincoln": [
+        "lincolin", "lincon",
+    ],
+    "mazda": [
+        "maxda", "mazada", "mazda 3", "mazda cx9", "mazda3", "mazda9",
+    ],
+    "mercedes": [
+        "actros", "marcedes", "mecedez", "mercdes", "mercedenz", "mercedes bench", "mercedese", "merceds",
+        "mercides", "merecedes", "mersedes", "merzedes",
+    ],
+    "mg": [
+        "m g",
+    ],
+    "mitsubishi": [
+        "metsubishi", "mishubishi", "misthbishi", "mistsubishi", "mistubishi", "misubishi", "mitchubishi",
+        "mithsubishi", "mitshibishi", "mitshubishe", "mitshubisi", "mitshubitshi", "mitsibishi",
+        "mitsibushi", "mitsobishi", "mitsubeshi", "mitsubhisi", "mitsubihi", "mitsubihsi", "mitsubish",
+        "mitsubishe", "mitsubishi fuso", "mitsubishi motors", "mitsubisi", "mitsubithi", "mitsubitzi",
+        "mitsubshi", "mitsuibishi", "mitubishi", "mitusbishi", "mtsubishi", "mutsubishi",
+    ],
+    "nissan": [
+        "i nissan", "inissan", "missan", "nassan", "nessan", "niisan", "niissan", "nis san", "nisaan",
+        "nissa", "nissam", "nissan 1", "nissan datsun", "nissan patrol", "nissan pick up", "nissan sunny",
+        "nissan*", "nissan,", "nissanh", "nissann", "nissans", "nissn", "nisssan", "nlssan", "nnissan",
+        "nssan",
+    ],
+    "peugeot": [
+        "pegeot", "peugot",
+    ],
+    "porsche": [
+        "porche", "porshe",
+    ],
+    "renault": [
+        "ranault", "reanault", "reanult", "renaul", "renaut", "renoult", "reynault",
+    ],
+    "subaru": [
+        "subaro",
+    ],
+    "suzuki": [
+        "susuki", "suzki", "zuzuki",
+    ],
+    "toyota": [
+        "t0yota", "tayota", "totota", "totyota", "toy0ta", "toyoa", "toyot", "toyota corolla",
+        "toyota fortuner", "toyota hilux", "toyota innova", "toyota land cruiser", "toyota prado",
+        "toyota toyota", "toyota yaris", "toyotaa", "toyoto", "toyotya", "toyoyta", "toyta", "toytota",
+        "toyuta", "tpyota", "tyota", "yoyota",
+    ],
+    "volkswagen": [
+        "volkswagon", "volkwagen",
+    ],
+    "volvo": [
+        "valvo", "velvo", "volov", "vovlo",
+    ],
+}
+MAKE_FIXES = {typo: brand for brand, typos in _MAKE_TYPOS.items() for typo in typos}
+
+# Model spellings that mean the same car. Exact match, applied after brackets and extra spaces are removed.
+MODEL_FIXES = {
+    "pickup": "pick up", "xterra": "x terra", "fjcruiser": "fj cruiser", "4runner": "4 runner",
+    "prado": "land cruiser prado", "land cruiserprado": "land cruiser prado",
+    "furtuner": "fortuner", "inova": "innova", "sequia": "sequoia", "sequioa": "sequoia",
+    "sta fe": "santa fe", "san tafe": "santa fe", "sunny new": "sunny", "tida": "tiida", "civilan": "civilian",
+    "serato": "cerato", "cerrato": "cerato", "ceratto": "cerato", "carnaval": "carnival", "carenz": "carens",
+    "crownvictoria": "crown victoria", "eco sport": "ecosport", "grand marquiz": "grand marquis",
+    "ford everest": "everest", "mu x": "mux", "m u x": "mux", "m ux": "mux", "d zire": "dzire",
+    "mazda2": "2", "mazda 2": "2", "300 c": "300c", "l b": "lb", "rewardnp": "reward np",
+}
+
+
 def ingest_vehicles():
     conn = _get_conn()
     vehicles_PE_df = _get_all_data_from_table(conn, "v_Vehicle")
@@ -293,6 +446,7 @@ def ingest_vehicles():
         .str.rstrip()
         .str.lstrip()
     )
+    vehicles_df["Make"] = vehicles_df["Make"].str.replace(r"\s+", " ", regex=True).str.strip().replace(MAKE_FIXES)
 
     logger.info("adjust Model")
 
@@ -458,6 +612,20 @@ def ingest_vehicles():
         .str.replace("zst", "zs")
         .str.rstrip()
         .str.lstrip()
+    )
+
+    # generic clean-up (Nov 2026): engine/chassis codes in brackets, repeated spaces, spaced model numbers
+    vehicles_df["Model"] = (
+        vehicles_df["Model"]
+        .str.replace(r"\(.*?\)", " ", regex=True)                                   # "tucson (g4n)" -> "tucson"
+        .str.replace(r"\(.*$", " ", regex=True)                                      # unclosed bracket
+        .str.replace(r"\s+", " ", regex=True)
+        .str.strip()
+        .str.replace(r"^land cruiser ?/ ?prado$", "land cruiser prado", regex=True)
+        .str.replace(r"^(es|gs|is|ls|lx|rx|gx|nx) (\d{3})$", r"\1\2", regex=True)     # lexus "rx 350" -> "rx350"
+        .str.replace(r"^([cesl]) (\d{3})$", r"\1\2", regex=True)                     # "c 200" -> "c200", "l 300" -> "l300"
+        .str.replace(r"^i (\d{2})$", r"i\1", regex=True)                             # hyundai "i 10" -> "i10"
+        .replace(MODEL_FIXES)
     )
 
     logger.info("adjust price level")
