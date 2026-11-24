@@ -147,7 +147,7 @@ def main() -> None:
     with pd.option_context("display.width", 250, "display.max_columns", 30):
         print(r.round(4).to_string(index=False))
         print("\nAll months:")
-        tot = {c: r[c].sum() for c in r.columns if "came" in c and "%" not in c or c == "Current list"}
+        tot = {c: r[c].sum() for c in r.columns if c.endswith(" came") or c == "Current list"}
         print(f"  current list {tot['Current list']:,} msgs -> {tot['Current came']:,} came ({tot['Current came'] / tot['Current list']:.2%})")
         print(f"  ranked same  {tot['Current list']:,} msgs -> {tot['Ranked, same size came']:,} came "
               f"({tot['Ranked, same size came'] / tot['Current list']:.2%})")
