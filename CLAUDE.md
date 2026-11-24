@@ -107,7 +107,7 @@ Standalone ETL script — **not a Kedro pipeline**, despite the name. Bridges th
   because `TMP_PROMOS` is no longer accessible. The promo list is now maintained by hand: the catalog
   reads `data/01_raw/raw_promos_2026_12.parquet` (old list + packages reviewed in Oct 2026 + 7 found
   missing in the Nov 2026 audit + 20 sold-but-renamed 2025 campaigns from `promos_review_7.xlsx`: Saudi National Day 2025,
-  May/July 2025 Mega Promo, dated June 2025 79/179 offers, Special Synthetic Offer 140). Promo names match `package_name` case- and whitespace-insensitively. Built with
+  May/July 2025 Mega Promo, dated June 2025 79/179 offers, Special Synthetic Offer 140; plus Rajhi Bank Synthetic Offer-185 and Wala Plus Special Promo Mineral/Synthetic). Promo names match `package_name` case- and whitespace-insensitively. Built with
   `scripts/build_promos_review.py` (MACDB `t_ServicePackage` → review xlsx) and
   `scripts/build_promos_parquet.py` (reviewed xlsx → parquet). Next review: `build_promos_review.py --previous <last review> --out <next>`
   carries decisions over and lists only what is left, including names sold but no longer in t_ServicePackage. Promos match on *package names*, not
