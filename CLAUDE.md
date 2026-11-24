@@ -105,11 +105,12 @@ Standalone ETL script — **not a Kedro pipeline**, despite the name. Bridges th
   pulls both, tags `StationBrand`, and concatenates.
 - **`ingest_promos()` is commented out of `ingestion_general()`** (`ingestion_pipeline.py:730-732`),
   because `TMP_PROMOS` is no longer accessible. The promo list is now maintained by hand: the catalog
-  reads `data/01_raw/raw_promos_2026_11.parquet` (old list + packages reviewed in Oct 2026 + 7 found
-  missing in the Nov 2026 audit: `MEGA OFFER PETROMIN MINERAL` and variants, 69/169 oil packages; review
-  file `promos_review_6.xlsx`). Promo names match `package_name` case- and whitespace-insensitively. Built with
+  reads `data/01_raw/raw_promos_2026_12.parquet` (old list + packages reviewed in Oct 2026 + 7 found
+  missing in the Nov 2026 audit + 20 sold-but-renamed 2025 campaigns from `promos_review_7.xlsx`: Saudi National Day 2025,
+  May/July 2025 Mega Promo, dated June 2025 79/179 offers, Special Synthetic Offer 140). Promo names match `package_name` case- and whitespace-insensitively. Built with
   `scripts/build_promos_review.py` (MACDB `t_ServicePackage` → review xlsx) and
-  `scripts/build_promos_parquet.py` (reviewed xlsx → parquet). Promos match on *package names*, not
+  `scripts/build_promos_parquet.py` (reviewed xlsx → parquet). Next review: `build_promos_review.py --previous <last review> --out <next>`
+  carries decisions over and lists only what is left, including names sold but no longer in t_ServicePackage. Promos match on *package names*, not
   `t_Promotion`. 99/199 and 111/222 oil packages are never promos. The original `raw_promos.parquet` is kept untouched.
 - Most functions coerce every column to `str` before writing. Casting back to numeric happens
   downstream. Don't be surprised by object dtypes in `01_raw`.
