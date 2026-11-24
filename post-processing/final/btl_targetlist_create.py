@@ -7,9 +7,15 @@ Not part of the Kedro pipeline; run it after `kedro run --pipeline full_mileage_
     python post-processing/final/btl_targetlist_create.py --as-of 2026-11-10
     python post-processing/final/btl_targetlist_create.py --recompute-price-segment
     python post-processing/final/btl_targetlist_create.py --search-engine "search-engine/11 Search Engine-Nov '26.xlsx"
+    python post-processing/final/btl_targetlist_create.py --selection due     # the pre-Dec 2026 rule
 
 Steps
   1. Keep active customers: loyalty_segment not Lost/Gone, last transaction within 365 days of --as-of.
+  1b. --selection ranked (default since Dec 2026): keep only cars that btl_ranking.py scores as likely to
+     come for oil this month (time since last oil vs the car's usual gap x predicted km since last oil;
+     see btl_ranking.py). A selected car with nothing due gets Product "Due Oil" (selected_by =
+     "ranked only"); a car that is due but scores low is dropped. --selection due keeps the old rule:
+     every car with something due.
   2. Give every car a product, highest priority first:
        Due PMS      is_due_pms & is_due_mineral_synthetic  -> sub product: PAC / Chinese / Toyota / Standard PMS
        Due Oil      mineral/synthetic due, no non-oil due  -> sub product: "Oil"
@@ -22,6 +28,13 @@ Steps
      ftr_branches at the forecast's _observ_end_dt); `is_station_closed` = 1 when that branch is in
      the ops Search Engine's "Permanent Closed Stations" sheet (incl. "Convert to PAC/NOS") and not
      back in "PE Stations List" (e.g. 1118 "Open Again"); `station_closing_date` from the same sheet.
+  5. Customer columns (marketing request, Nov 2026):
+       last_mileage_reading      last odometer reading the model has for the car
+       assumed_mileage_reading   last reading + the model's km/day x days from the last visit to --as-of
+       customer_since            earliest of the customer record's creation (MACDB, any record with this
+                                 mobile; 2021-03-12 is the system migration) and the car's first visit
+       customer_tenure_band      <12 months / 12-24 months / 24+ months before --as-of
+     Loyalty programme membership/tier is not in MACDB (no such table or column), so not included.
      Uses the newest search-engine/*Search Engine-<Mon> '<yy>.xlsx (or --search-engine). This
      replaces the forecast's is_station_closed, which comes from mileage.closed_station_list (empty).
 
@@ -66,6 +79,7 @@ import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 import yaml
 
+import btl_ranking
 from btl_paths import REPO, month_dir
 
 log = logging.getLogger("btl_targetlist_create")
@@ -74,6 +88,9 @@ DEFAULT_INPUT = REPO / "data/06_models/mileage/mileage_forecast.parquet"
 PRM_TRANSACTIONS = REPO / "data/03_primary/prm_transactions"
 TRANSACTIONS_CATALOG = REPO / "conf/base/catalog/transactions_pipeline.yml"
 FTR_BRANCHES = REPO / "data/04_feature/ftr_branches"
+FTR_MILEAGE = REPO / "data/04_feature/ftr_mileage"
+FTR_SEGMENT = REPO / "data/04_feature/ftr_segment"
+RAW_CUSTOMERS = REPO / "data/01_raw/raw_customers.parquet"
 SEARCH_ENGINE_DIR = REPO / "search-engine"
 PRICE_WINDOW_MONTHS = 12  # rowsBetween(-11, 0) over monthly snapshots in create_segment_features
 
@@ -138,8 +155,20 @@ OUTPUT_COLUMNS = [
     "churn_bucket",
     "Product",
     "Sub Product",
+    "selected_by",
+    "oil_visit_score",
+    "oil_time_band",
+    "oil_km_band",
+    "days_since_last_oil",
+    "usual_oil_gap_days",
+    "last_mileage_reading",
+    "assumed_mileage_reading",
+    "customer_since",
+    "customer_tenure_band",
     "Target_Month_Wave",
 ]
+SELECTIONS = ["ranked", "due"]
+TENURE_BANDS = [(12, "<12 months"), (24, "12-24 months")]  # else "24+ months"
 
 
 def load_forecast(path: Path) -> pd.DataFrame:
@@ -174,7 +203,7 @@ def build_non_oil_due(df: pd.DataFrame) -> pd.Series:
     return pd.Series(joined, index=df.index, dtype=object).str.removesuffix(", ")
 
 
-def assign_product(df: pd.DataFrame) -> pd.DataFrame:
+def assign_product(df: pd.DataFrame, keep_all: bool = False) -> pd.DataFrame:
     non_oil = build_non_oil_due(df)
     has_non_oil = (non_oil != "").to_numpy()
     oil = (df["is_due_mineral_synthetic"] == 1).to_numpy()
@@ -198,18 +227,45 @@ def assign_product(df: pd.DataFrame) -> pd.DataFrame:
 
     df["Product"] = product
     df["Sub Product"] = sub_product
+    if keep_all:
+        return df
     out = df.loc[product != ""].copy()
     log.info("with a product to pitch: %s rows", f"{len(out):,}")
     return out
 
 
+def select_ranked(df: pd.DataFrame, target_month: str, as_of: date) -> pd.DataFrame:
+    """Keep the cars btl_ranking selects; give selected cars with nothing due the oil product."""
+    scores = btl_ranking.score_target(target_month, as_of)
+    df = df.join(scores, on="_id")
+    df["ranked_in"] = df["ranked_in"].fillna(False).astype(bool)
+    due = df["Product"] != ""
+    log.info(
+        "ranked selection: %s cars in (%s also due, %s not due -> Due Oil); %s due cars dropped as unlikely",
+        f"{df['ranked_in'].sum():,}", f"{(df['ranked_in'] & due).sum():,}", f"{(df['ranked_in'] & ~due).sum():,}",
+        f"{(~df['ranked_in'] & due).sum():,}",
+    )
+    df["selected_by"] = np.where(due, "due + ranked", "ranked only")
+    df.loc[~due, ["Product", "Sub Product"]] = ["Due Oil", "Oil"]
+    return df.loc[df["ranked_in"]].drop(columns="ranked_in")
+
+
+def add_scores(df: pd.DataFrame, target_month: str, as_of: date) -> pd.DataFrame:
+    """--selection due: same score columns, for information only."""
+    df = df.join(btl_ranking.score_target(target_month, as_of).drop(columns="ranked_in"), on="_id")
+    df["selected_by"] = "due"
+    return df
+
+
 def one_row_per_mobile(df: pd.DataFrame) -> pd.DataFrame:
     df["_priority"] = df["Product"].map(PRODUCT_PRIORITY)
+    df["_score"] = df["oil_visit_score"].fillna(-1) if "oil_visit_score" in df else 0
     df = df.sort_values(
-        ["mobile", "_priority", "customer_last_transaction_dt"],
-        ascending=[True, True, False],
+        ["mobile", "_priority", "_score", "customer_last_transaction_dt"],
+        ascending=[True, True, False, False],
         kind="stable",
     )
+    df = df.drop(columns="_score")
     out = df.drop_duplicates(subset="mobile", keep="first").drop(columns="_priority")
     log.info("one row per mobile: %s rows", f"{len(out):,}")
     return out
@@ -330,6 +386,39 @@ def flag_closed_station(df: pd.DataFrame, observ_end: pd.Timestamp, search_engin
     return df
 
 
+def _snapshot(path: Path, observ_end: pd.Timestamp, ids: list, cols: list[str]) -> pd.DataFrame:
+    flt = (pc.field("_observ_end_dt") == observ_end.date()) & pc.field("_id").isin(ids)
+    t = ds.dataset(path, format="parquet").to_table(filter=flt, columns=["_id", *cols]).to_pandas()
+    return t.drop_duplicates("_id").set_index("_id")
+
+
+def add_customer_columns(df: pd.DataFrame, observ_end: pd.Timestamp, as_of: date) -> pd.DataFrame:
+    ids = df["_id"].unique().tolist()
+    mil = _snapshot(FTR_MILEAGE, observ_end, ids,
+                    ["customer_last_current_mileage", "customer_avg_mileage_per_day", "customer_last_transaction_dt"])
+    last_km = df["_id"].map(mil["customer_last_current_mileage"]).astype(float)
+    rate = df["_id"].map(mil["customer_avg_mileage_per_day"]).astype(float)
+    days = (pd.Timestamp(as_of) - pd.to_datetime(df["_id"].map(mil["customer_last_transaction_dt"]))).dt.days.clip(lower=0)
+    df["last_mileage_reading"] = last_km.round().astype("Int64")
+    df["assumed_mileage_reading"] = (last_km + rate * days).round().astype("Int64")
+
+    first_visit = pd.to_datetime(df["_id"].map(_snapshot(FTR_SEGMENT, observ_end, ids, ["first_visit_dt"])["first_visit_dt"]))
+    cust = pq.read_table(RAW_CUSTOMERS, columns=["Mobile", "CreationOn"]).to_pandas()
+    cust["CreationOn"] = pd.to_datetime(cust["CreationOn"], errors="coerce")
+    created = cust[cust["CreationOn"] >= "2000-01-01"].groupby("Mobile")["CreationOn"].min()
+    since = pd.concat([first_visit, pd.to_datetime(df["mobile"].astype(str).map(created))], axis=1).min(axis=1)
+    df["customer_since"] = since.dt.date
+    months = (pd.Timestamp(as_of) - since).dt.days / 30.44
+    df["customer_tenure_band"] = np.select(
+        [months < m for m, _ in TENURE_BANDS], [b for _, b in TENURE_BANDS], default="24+ months")
+    df.loc[since.isna(), "customer_tenure_band"] = ""
+    log.info(
+        "customer columns: %s without a last mileage reading; tenure %s",
+        f"{df['last_mileage_reading'].isna().sum():,}", df["customer_tenure_band"].value_counts().to_dict(),
+    )
+    return df
+
+
 def finalize(df: pd.DataFrame, target_month: str) -> pd.DataFrame:
     df["mobile"] = df["mobile"].astype(str)
     df["PlateNumber"] = df["_id"].str.split("__").str[0]
@@ -339,11 +428,14 @@ def finalize(df: pd.DataFrame, target_month: str) -> pd.DataFrame:
     )
     df["campaign_group"] = df["campaign_group"].str.upper()
     df["Target_Month_Wave"] = target_month
+    df = df.rename(columns={"time_band": "oil_time_band", "km_band": "oil_km_band", "days_since_oil": "days_since_last_oil"})
+    df["oil_visit_score"] = df["oil_visit_score"].round(4)
     return df[OUTPUT_COLUMNS].reset_index(drop=True)
 
 
 def log_summary(df: pd.DataFrame) -> None:
     log.info("Product:\n%s", df["Product"].value_counts().to_string())
+    log.info("selected_by:\n%s", df["selected_by"].value_counts().to_string())
 
 
 def target_month_from(df_path: Path) -> str:
@@ -389,6 +481,12 @@ def main() -> None:
         default="offers+discount",
         help="What breaks Full price under --recompute-price-segment (see module docstring).",
     )
+    parser.add_argument(
+        "--selection",
+        choices=SELECTIONS,
+        default="ranked",
+        help="ranked: cars likely to come for oil (btl_ranking.py); due: every car with something due (old rule).",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -397,12 +495,16 @@ def main() -> None:
 
     df = load_forecast(args.input)
     df = filter_active(df, args.as_of)
-    df = assign_product(df)
+    if args.selection == "ranked":
+        df = select_ranked(assign_product(df, keep_all=True), target_month, args.as_of)
+    else:
+        df = add_scores(assign_product(df), target_month, args.as_of)
     df = one_row_per_mobile(df)
     if args.recompute_price_segment:
         df = recompute_price_segment(df, target_month, args.promos or catalog_promos_path(), args.price_rule)
     observ_end = pd.Timestamp(f"1 {target_month}") + pd.offsets.MonthEnd(0)
     df = flag_closed_station(df, observ_end, args.search_engine or latest_search_engine())
+    df = add_customer_columns(df, observ_end, args.as_of)
     df = finalize(df, target_month)
     log_summary(df)
 
