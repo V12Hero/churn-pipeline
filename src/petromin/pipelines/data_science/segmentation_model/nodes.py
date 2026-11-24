@@ -268,7 +268,7 @@ def ftr_join_dfs_segmentations(
             f.col("is_potential_loyal") == 1,
             "potential_loyal"
         ).when(
-            f.col("is_uncommited") == 1,
+            f.col("is_uncommitted") == 1,
             "uncommited"
         ).when(
             f.col("is_new_joiner") == 1,

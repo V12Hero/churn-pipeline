@@ -526,7 +526,7 @@ universe_of_features:
  - is_new_joiner
  - is_loyal
  - is_potential_loyal
- - is_uncommited
+ - is_uncommitted
  - is_lost
  - is_gone
  - is_promo_hunter

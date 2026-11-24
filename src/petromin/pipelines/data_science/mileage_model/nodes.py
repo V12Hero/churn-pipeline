@@ -175,7 +175,7 @@ def prepare_mileage_forecast(
 #     logger.info("Creating Features - Loyalty segments")
 #     forecast_df["loyalty_segment"] = None
 #     forecast_df["loyalty_segment"] = np.where(forecast_df["is_new_joiner"]==1, "New Joiner",forecast_df["loyalty_segment"])
-#     forecast_df["loyalty_segment"] = np.where(forecast_df["is_uncommited"]==1, "Uncommited",forecast_df["loyalty_segment"])
+#     forecast_df["loyalty_segment"] = np.where(forecast_df["is_uncommitted"]==1, "Uncommitted",forecast_df["loyalty_segment"])
 #     forecast_df["loyalty_segment"] = np.where(forecast_df["is_potential_loyal"]==1, "Potential Loyal",forecast_df["loyalty_segment"])
 #     forecast_df["loyalty_segment"] = np.where(forecast_df["is_loyal"]==1, "Loyal",forecast_df["loyalty_segment"])
 #     forecast_df["loyalty_segment"] = np.where(forecast_df["is_lost"]==1, "Lost",forecast_df["loyalty_segment"])
@@ -364,7 +364,7 @@ def forecast_mileage(
                 df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype("Int8")
 
     _flag_cols = [
-        "customer_mineral_oil","is_new_joiner","is_uncommited","is_potential_loyal","is_loyal","is_lost","is_gone",
+        "customer_mineral_oil","is_new_joiner","is_uncommitted","is_potential_loyal","is_loyal","is_lost","is_gone",
         "is_full_price","is_promo_hunter","is_mixed_price",
         "is_due_mineral_oil","is_due_synthetic_oil",
         "total_number_of_pms_visits_last_12_months"
@@ -385,13 +385,13 @@ def forecast_mileage(
     logger.info("Creating Features - Loyalty segments")
     loy_conds = [
         forecast_df["is_new_joiner"].to_numpy() == 1,
-        forecast_df["is_uncommited"].to_numpy() == 1,
+        forecast_df["is_uncommitted"].to_numpy() == 1,
         forecast_df["is_potential_loyal"].to_numpy() == 1,
         forecast_df["is_loyal"].to_numpy() == 1,
         forecast_df["is_lost"].to_numpy() == 1,
         forecast_df["is_gone"].to_numpy() == 1,
     ]
-    loy_vals = ["New Joiner","Uncommited","Potential Loyal","Loyal","Lost","Gone"]
+    loy_vals = ["New Joiner","Uncommitted","Potential Loyal","Loyal","Lost","Gone"]
     forecast_df["loyalty_segment"] = pd.Categorical(np.select(loy_conds, loy_vals, default=None), categories=loy_vals)
 
     logger.info("Creating Features - Price segments")

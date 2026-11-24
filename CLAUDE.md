@@ -294,6 +294,10 @@ Related traps:
   be one month earlier (§2).
 - Both `filter_with_conditions` implementations (`predict_churn/nodes.py:16` and
   `mileage_model/nodes.py:20`) are duplicated near-identical copies. Fix bugs in both.
+- **`is_uncommitted` (renamed Nov 2026, was `is_uncommited`).** The loyalty label is now `Uncommitted`.
+  `ftr_master` built before the rename still has the old column, so `--from-nodes` resumes that skip
+  `create_ftr_master` fail with a `KeyError` on `is_uncommitted` until the transactions pipeline is rebuilt.
+  The segmentation namespace `uncommited` keeps its old spelling because its model artefacts live under that path.
 - There are stray `# breakpoint()` lines left in the DS nodes. Harmless; leave them unless cleaning up.
 - `data/`, `logs/`, `info.log`, `venv/`, `__pycache__/` are working artefacts — never commit them.
 - The `ingestion_pipeline.py` SQL is f-string-interpolated. Table names are hardcoded literals, so

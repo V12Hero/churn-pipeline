@@ -902,7 +902,7 @@ def validation_node(
     print(metrics)
     print(metrics_df.to_markdown())
 
-    # for expr in ["is_new_joiner == 1", "is_uncommited == 1", "is_potential_loyal == 1", "is_loyal == 1", "is_lost == 1", "is_gone == 1"]:
+    # for expr in ["is_new_joiner == 1", "is_uncommitted == 1", "is_potential_loyal == 1", "is_loyal == 1", "is_lost == 1", "is_gone == 1"]:
     #     logger.info(expr)
     #     metrics, metrics_df = validate_model(data, columns, model, target_column, expr)
 

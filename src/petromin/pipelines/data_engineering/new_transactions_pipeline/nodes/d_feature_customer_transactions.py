@@ -141,7 +141,7 @@ def create_segment_features(
             1
         ).otherwise(0)
     ).withColumn(
-        "is_uncommited",
+        "is_uncommitted",
         f.when(
             (f.col("total_number_of_visits_last_12_months") >= 1) &
             (f.col("months_since_last_visit") < 12) &
@@ -211,7 +211,7 @@ def create_segment_features(
         "is_new_joiner",
         "is_loyal",
         "is_potential_loyal",
-        "is_uncommited",
+        "is_uncommitted",
         "is_lost",
         "is_gone",
         "is_promo_hunter",

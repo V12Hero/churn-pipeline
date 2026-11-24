@@ -420,7 +420,7 @@ Kedro hands the data over to Pandas for this final, heavily operational node. Th
 
 * **Memory Optimization:** It starts by downcasting the boolean/flag columns to `Int8` (a nullable 8-bit integer in Pandas) to dramatically save RAM during processing.
 * **Business Segmentation:** It assigns clean, string-based labels to various features using `np.select` and `pd.cut`:
-* **Loyalty:** Categorizes customers into `New Joiner`, `Uncommited`, `Potential Loyal`, `Loyal`, `Lost`, or `Gone`.
+* **Loyalty:** Categorizes customers into `New Joiner`, `Uncommitted`, `Potential Loyal`, `Loyal`, `Lost`, or `Gone`.
 * **Price Sensitivity:** Categorizes them into `Full price`, `Promo hunter`, or `Mixed price`.
 * **Bucketing:** It groups continuous variables into human-readable buckets (e.g., Car Age goes into "0-2", "3-5", "10+", Mileage Per Day goes into "25-50", "50-75", etc.).
 * **Deciles:** It splits revenue into 10 quantiles so you can easily target your top 10% spenders.
@@ -479,7 +479,7 @@ The pipeline evaluates these conditions sequentially to assign a 1 or 0 flag to 
 * **The Math:** Must have visited at least 2 times in the last 12 months **AND** they meet at least **70%** of their expected visits for their oil type (e.g., `visits > expected_visits * 0.7`) **AND** they are not already flagged as `is_loyal`.
 * **The Meaning:** These customers are good, but they are "leaking" some oil changes to competitors. They come to Petromin for most of their needs, but their mileage implies they are getting serviced somewhere else occasionally.
 
-**4. Uncommited (`is_uncommited`)**
+**4. Uncommitted (`is_uncommitted`)**
 
 * **The Math:** Visited at least 1 time in the last 12 months **AND** `months_since_last_visit < 12` **AND** they don't qualify for New Joiner, Loyal, or Potential Loyal.
 * **The Meaning:** The tricky middle ground. They are an active customer (seen in the last year, have more than 1 lifetime visit), but they visit far less frequently than their odometer says they should.

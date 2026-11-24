@@ -66,7 +66,8 @@ PRODUCT_TOKEN = {"Due Non Oil": "NonOil", "Due Oil": "Oil", "Due Oil + Non Oil":
 SUB_PRODUCT_TOKEN = {"Oil": "", EF_BAT_ACS: "EF_BAT_ACS", ACF_AF_CO_SP: "ACF_AF_CO_SP"}
 CHURN_TOKEN = {"All": "", "High Probability": "Hi_Churn", "Low Probability": "Lo_Churn"}
 LOYALTY_TOKEN = {"All": "", "Loyal": "Loyal", "New Joiner": "New", "Potential Loyal": "Pot_Loyal",
-                 "Uncommited": "Uncom", "Lost n Found": "LnF"}
+                 "Uncommitted": "Uncom", "Uncommited": "Uncom",  # old lists used the typo
+                 "Lost n Found": "LnF"}
 PRICE_TOKEN = {"Full price": "FP", "Mixed price": "MP", "Promo hunter": "Promo"}
 
 GROUP_COLS = ["campaign_name", "Product", "Sub Product", "churn_bucket", "loyalty_segment", "price_segment"]

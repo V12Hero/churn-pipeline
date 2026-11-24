@@ -2,14 +2,14 @@ uncommited.filter_segmentation_model_conditions:
   - _observ_end_dt >= "2021-01-01"
   - _observ_end_dt < "2025-01-01"
   - is_active > 0
-  - is_uncommited > 0
+  - is_uncommitted > 0
   # - below_estimated_mineral_oil_change > 0
   # - is_active_sum_past_23_next_0_months > 3
 
 uncommited.filter_segmentation_prediction_conditions:
   - _observ_end_dt >= "2021-01-01"
   - _observ_end_dt < "2026-01-01"
-  - is_uncommited > 0
+  - is_uncommitted > 0
   - below_estimated_mineral_oil_change > 0
 
 # Model artifact parameters
