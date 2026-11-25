@@ -20,7 +20,9 @@ Relabelling (what gets its own campaign)
 
 Outputs, in outputs/<mon-yyyy>/  (stem = input name without its date, e.g. nov_2026_wave_1)
   <stem>_MASTER_<date>.csv          every row (TEST + CONTROL) with campaign columns
-  <stem>_TEST_list_<date>.xlsx      TEST only, one sheet per campaign_name_lang
+  <stem>_TEST_list_<date>.xlsx      TEST only, one sheet per campaign_name_lang; without CSV_ONLY_COLS
+                                    (internal scoring columns, user 2026-11-25: map them from the CSV
+                                    if marketing asks)
   <stem>_test_grouped_<date>.csv    TEST customer counts per campaign
 
 Differences vs the notebook (intentional)
@@ -69,6 +71,11 @@ LOYALTY_TOKEN = {"All": "", "Loyal": "Loyal", "New Joiner": "New", "Potential Lo
                  "Uncommitted": "Uncom", "Uncommited": "Uncom",  # old lists used the typo
                  "Lost n Found": "LnF"}
 PRICE_TOKEN = {"Full price": "FP", "Mixed price": "MP", "Promo hunter": "Promo"}
+
+CSV_ONLY_COLS = [  # kept in the MASTER csv, left out of the marketing workbook
+    "selected_by", "oil_visit_score", "oil_time_band", "oil_km_band", "churn_probability",
+    "days_since_last_oil", "usual_oil_gap_days", "customer_since",
+]
 
 GROUP_COLS = ["campaign_name", "Product", "Sub Product", "churn_bucket", "loyalty_segment", "price_segment"]
 
@@ -186,7 +193,7 @@ def main() -> None:
     sheets = sheet_names(sorted(test["campaign_name_lang"].unique()))
     xlsx_path = out_dir / f"{stem}_TEST_list_{today}.xlsx"
     with pd.ExcelWriter(xlsx_path, engine="xlsxwriter") as writer:
-        for name, group in test.groupby("campaign_name_lang", sort=True):
+        for name, group in test.drop(columns=CSV_ONLY_COLS, errors="ignore").groupby("campaign_name_lang", sort=True):
             group.to_excel(writer, sheet_name=sheets[name], index=False)
     shortened = {k: v for k, v in sheets.items() if k != v}
     log.info("wrote %s (%s sheets, %s with shortened names)", xlsx_path.name, len(sheets), len(shortened))
